@@ -5,13 +5,16 @@ from telegram import ReplyKeyboardMarkup, ReplyKeyboardRemove, InlineKeyboardBut
     KeyboardButton
 from telegram.ext import Updater, CommandHandler, MessageHandler, Filters, ConversationHandler, CallbackQueryHandler
 
-from keyboards import menu_selection_buttons
+from keyboards import menu_selection_buttons, menu_regex
 
 
 class State(Enum):
     PROCESSED_START = 1
     PROCESSED_REGISTRATION = 2
-    ASKED_NEW_NAME = 3
+    NAME_ACCEPTED = 3
+    NAME_REJECTED = 4
+    ASKED_NEW_NAME = 5
+    ASKED_NAME = 6
 
 
 def set_keyboards_buttons(buttons):
@@ -23,7 +26,6 @@ def set_keyboards_buttons(buttons):
     return keyboard
 
 
-# Функция нуждается в настройке
 def get_keyboard(buttons, one_time_keyboard=False):
     reply_markup = ReplyKeyboardMarkup(
         keyboard=[set_keyboards_buttons(buttons)],
@@ -52,7 +54,7 @@ def start(update, context):
             text='Регистрация пройдена! \nВыберите один из следующих пунктов: ',
             reply_markup=get_keyboard(menu_selection_buttons),
         )
-        return State.PROCESSED_START
+        return State.PROCESSED_REGISTRATION
     else:
         keyboard = [
             [
@@ -71,9 +73,11 @@ def start(update, context):
                 f'{user_first_name} - это Ваше имя?',
                 reply_markup=reply_markup
             )
+        return State.ASKED_NAME
 
 
-def handle_name(update, context, query):
+def handle_name(update, context):
+    query = update.callback_query
     message_id = query.message.message_id
     user_id = update['callback_query']['message']['chat']['id']
 
@@ -99,7 +103,6 @@ def handle_name(update, context, query):
 
 def handle_new_name(update, context):
     user_name = update.message.text
-    print(user_name)
     reply_markup = get_keyboard(menu_selection_buttons)
     update.message.reply_text(
         text='Выберите один из следующих пунктов: ',
@@ -113,47 +116,28 @@ def handle_main_menu(update, context):
     pass
 
 
-def done(update, context):
-    message = 'Работа завершена'
-    reply_markup = ReplyKeyboardRemove
-    update.message.reply_text(
-        text=message,
-        reply_markup=reply_markup,
-    )
-    return CommandHandler.END
-
-
-def registration_callback_handler(update, context):
-    callback_name = ['accept_name', 'change_name']
-    query = update.callback_query
-    handle_name(update, context, query)
-
-
 registration_conversation_handler = ConversationHandler(
     entry_points=[CommandHandler('start', start)],
     states={
-        State.PROCESSED_START: [
-            MessageHandler(
-                Filters.regex(''.join(menu_selection_buttons)),
-                partial(handle_main_menu)
-            )
-        ],
         State.PROCESSED_REGISTRATION: [
             MessageHandler(
                 Filters.regex(''.join(menu_selection_buttons)),
-                partial(handle_main_menu)
+                handle_main_menu
             )
+        ],
+        State.ASKED_NAME: [
+            CallbackQueryHandler(
+                handle_name
+            ),
         ],
         State.ASKED_NEW_NAME: [
             MessageHandler(
                 Filters.text,
-                partial(handle_new_name),
+                handle_new_name,
             )
         ],
     },
     fallbacks=[
-        MessageHandler(Filters.regex('Done'), done)
+        CommandHandler('start', start)
     ]
 )
-
-
