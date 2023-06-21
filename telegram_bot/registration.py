@@ -1,7 +1,8 @@
 from enum import Enum
 from functools import partial
 
-from telegram import ReplyKeyboardMarkup, ReplyKeyboardRemove, InlineKeyboardButton, InlineKeyboardMarkup
+from telegram import ReplyKeyboardMarkup, ReplyKeyboardRemove, InlineKeyboardButton, InlineKeyboardMarkup, \
+    KeyboardButton
 from telegram.ext import Updater, CommandHandler, MessageHandler, Filters, ConversationHandler, CallbackQueryHandler
 
 from keyboards import menu_selection_buttons
@@ -13,10 +14,19 @@ class State(Enum):
     ASKED_NEW_NAME = 3
 
 
+def set_keyboards_buttons(buttons):
+    keyboard = []
+
+    for button in buttons:
+        keyboard.append(KeyboardButton(button))
+
+    return keyboard
+
+
 # Функция нуждается в настройке
 def get_keyboard(buttons, one_time_keyboard=False):
     reply_markup = ReplyKeyboardMarkup(
-        keyboard=buttons,
+        keyboard=[set_keyboards_buttons(buttons)],
         resize_keyboard=True,
         one_time_keyboard=one_time_keyboard,
     )
