@@ -6,6 +6,7 @@ from telegram import ReplyKeyboardMarkup, ReplyKeyboardRemove, InlineKeyboardBut
 
 
 from .keyboards import main_menu_buttons
+from backend.utils import create_user, get_user
 
 
 class RegistrationState(Enum):
@@ -42,13 +43,11 @@ def start(update, context):
         text='Здравствуйте. Это официальный бот по поддержке участников 🤖.',
         reply_markup=reply_markup,
     )
-    # TODO Здесь делаем запрос к БД
-    # TODO Здесь присваиваем пользователю роль
-    user_role = ''
+    user = get_user(user_id)
 
-    if user_role:
+    if user:
         update.message.reply_text(
-            text='Регистрация пройдена! \nВыберите один из следующих пунктов: ',
+            text='Авторизация пройдена! \nВыберите один из следующих пунктов: ',
             reply_markup=get_keyboard(list(main_menu_buttons.values())),
         )
         return RegistrationState.PROCESSED_REGISTRATION
@@ -90,7 +89,7 @@ def handle_name(update, context):
         message = 'Выберите один из следующих пунктов: '
         reply_markup = get_keyboard(list(main_menu_buttons.values()))
         context.bot.sendMessage(update.effective_chat.id, text=message, reply_markup=reply_markup)
-        # TODO Здесь сохраняем пользователя в БД
+        create_user(user_id, user_name)
         return RegistrationState.PROCESSED_REGISTRATION
 
     else:
@@ -100,12 +99,13 @@ def handle_name(update, context):
 
 def handle_new_name(update, context):
     user_name = update.message.text
+    user_id = update.message.from_user.id
     reply_markup = get_keyboard(list(main_menu_buttons.values()))
     update.message.reply_text(
         text='Выберите один из следующих пунктов: ',
         reply_markup=reply_markup
     )
-    # TODO Здесь сохраняем пользователя в БД
+    create_user(user_id, user_name)
     return RegistrationState.PROCESSED_REGISTRATION
 
 

@@ -3,17 +3,16 @@ from django.db import models
 
 class User(models.Model):
     telegram_id = models.CharField('Телеграм идентификатор', max_length=10, unique=True)
-    first_name = models.CharField('Имя', max_length=16)
-    last_name = models.CharField('Фамилия', max_length=16)
+    name = models.CharField('Имя', max_length=32)
     is_speaker = models.BooleanField('Спикер', default=False)
-    about = models.CharField('О себе', max_length=250, null=True)
+    about = models.CharField('О себе', max_length=250, blank=True)
 
     class Meta:
         verbose_name = 'Пользователь'
         verbose_name_plural = 'Пользователи'
 
     def __str__(self):
-        return f"{self.first_name} {self.last_name}"
+        return f"{self.name}"
 
 
 class Event(models.Model):
