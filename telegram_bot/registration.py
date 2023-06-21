@@ -5,7 +5,7 @@ from telegram import ReplyKeyboardMarkup, ReplyKeyboardRemove, InlineKeyboardBut
     KeyboardButton
 from telegram.ext import Updater, CommandHandler, MessageHandler, Filters, ConversationHandler, CallbackQueryHandler
 
-from keyboards import menu_selection_buttons
+from keyboards import main_menu_buttons
 
 
 class State(Enum):
@@ -49,7 +49,7 @@ def start(update, context):
     if user_role:
         update.message.reply_text(
             text='Регистрация пройдена! \nВыберите один из следующих пунктов: ',
-            reply_markup=get_keyboard(menu_selection_buttons),
+            reply_markup=get_keyboard(list(main_menu_buttons.values())),
         )
         return State.PROCESSED_REGISTRATION
     else:
@@ -88,7 +88,7 @@ def handle_name(update, context):
 
         context.bot.delete_message(update.effective_chat.id, message_id)
         message = 'Выберите один из следующих пунктов: '
-        reply_markup = get_keyboard(menu_selection_buttons)
+        reply_markup = get_keyboard(list(main_menu_buttons.values()))
         context.bot.sendMessage(update.effective_chat.id, text=message, reply_markup=reply_markup)
         # TODO Здесь сохраняем пользователя в БД
         return State.PROCESSED_REGISTRATION
@@ -100,7 +100,7 @@ def handle_name(update, context):
 
 def handle_new_name(update, context):
     user_name = update.message.text
-    reply_markup = get_keyboard(menu_selection_buttons)
+    reply_markup = get_keyboard(list(main_menu_buttons.values()))
     update.message.reply_text(
         text='Выберите один из следующих пунктов: ',
         reply_markup=reply_markup
@@ -116,12 +116,12 @@ def handle_main_menu(update, context):
 registration_conversation_handler = ConversationHandler(
     entry_points=[CommandHandler('start', start)],
     states={
-        State.PROCESSED_REGISTRATION: [
-            MessageHandler(
-                Filters.regex(''.join(menu_selection_buttons)),
-                handle_main_menu
-            )
-        ],
+        # State.PROCESSED_REGISTRATION: [
+        #     MessageHandler(
+        #         Filters.regex(''.join(menu_selection_buttons)),
+        #         handle_main_menu
+        #     )
+        # ],
         State.ASKED_NAME: [
             CallbackQueryHandler(
                 handle_name
