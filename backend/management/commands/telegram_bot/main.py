@@ -3,7 +3,7 @@ from enum import Enum
 from environs import Env
 from telegram.ext import Updater, CommandHandler, MessageHandler, Filters, ConversationHandler, CallbackQueryHandler
 
-from registration import start, handle_name, handle_new_name, RegistrationState
+from .registration import start, handle_name, handle_new_name, RegistrationState
 
 
 def main():

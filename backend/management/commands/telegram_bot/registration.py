@@ -5,7 +5,7 @@ from telegram import ReplyKeyboardMarkup, ReplyKeyboardRemove, InlineKeyboardBut
     KeyboardButton
 
 
-from keyboards import main_menu_buttons
+from .keyboards import main_menu_buttons
 
 
 class RegistrationState(Enum):
