@@ -9,12 +9,9 @@ from keyboards import menu_selection_buttons
 
 
 class State(Enum):
-    PROCESSED_START = 1
-    PROCESSED_REGISTRATION = 2
-    NAME_ACCEPTED = 3
-    NAME_REJECTED = 4
-    ASKED_NEW_NAME = 5
-    ASKED_NAME = 6
+    PROCESSED_REGISTRATION = 1
+    ASKED_NEW_NAME = 2
+    ASKED_NAME = 3
 
 
 def set_keyboards_buttons(buttons):
