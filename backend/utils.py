@@ -56,8 +56,11 @@ def get_events():
 
 
 def get_event(title):
-    event = Event.objects.get(title=title)
-    return serialize_event(event)
+    try:
+        event = Event.objects.get(title=title)
+        return serialize_event(event)
+    except Event.DoesNotExist:
+        return None
 
 
 def create_question(guest, event, content):
