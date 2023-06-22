@@ -17,22 +17,38 @@ def start_exchange(update, context):
         return ConversationHandler.END
     else:
         context.user_data['user_profile'] = user
-        keyboard = [
-            [
-                InlineKeyboardButton("Да", callback_data='yes'),
-                InlineKeyboardButton("Нет", callback_data='no'),
+        existing_card = VisitCard.objects.filter(owner=user).first()
+        if existing_card:
+            query = update.callback_query
+            keyboard = [
+                [
+                    InlineKeyboardButton("Обновить", callback_data='update'),
+                    InlineKeyboardButton("Использовать текущую", callback_data='use_current'),
+                ]
             ]
-        ]
-        reply_markup = InlineKeyboardMarkup(keyboard)
-        context.bot.send_message(chat_id=update.effective_chat.id,
-                                 text="Вы хотите обменяться визитками?",
-                                 reply_markup=reply_markup)
+            reply_markup = InlineKeyboardMarkup(keyboard)
+            context.bot.send_message(chat_id=update.effective_chat.id,
+                                      text="У вас уже есть визитка. Хотите обновить ее или использовать текущую?",
+                                      reply_markup=reply_markup)
+            return VISIT_CARD_AGREE
+        else:
+            context.user_data['user_profile'] = user
+            keyboard = [
+                [
+                    InlineKeyboardButton("Да", callback_data='yes'),
+                    InlineKeyboardButton("Нет", callback_data='no'),
+                ]
+            ]
+            reply_markup = InlineKeyboardMarkup(keyboard)
+            context.bot.send_message(chat_id=update.effective_chat.id,
+                                     text="Вы хотите обменяться визитками?",
+                                     reply_markup=reply_markup)
         return VISIT_CARD_AGREE
 
 
 def handle_exchange_response(update, context):
     query = update.callback_query
-    if query.data == 'yes':
+    if query.data == 'yes' or query.data == 'update':
         context.bot.edit_message_text(chat_id=query.message.chat_id,
                                       message_id=query.message.message_id,
                                       text="Пожалуйста, введите свои данные в следующем формате:\n\n"
@@ -40,6 +56,15 @@ def handle_exchange_response(update, context):
                                            "Должность\n"
                                            "Телефон")
         return VISIT_CARD_DETAILS
+    elif query.data == 'use_current':
+        all_cards = VisitCard.objects.all()
+        all_cards_text = ""
+        for card in all_cards:
+            all_cards_text += f"Имя: {card.first_name} {card.last_name}\nДолжность: {card.job_title}\nТелефон: {card.phone}\n\n"
+        context.bot.edit_message_text(chat_id=query.message.chat_id,
+                                      message_id=query.message.message_id,
+                                      text="Ваша текущая визитка будет использована. Вот все визитки:\n\n" + all_cards_text)
+        return ConversationHandler.END
     else:
         context.bot.edit_message_text(chat_id=query.message.chat_id,
                                       message_id=query.message.message_id,
