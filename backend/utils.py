@@ -1,4 +1,4 @@
-from .models import User, Event, Question
+from .models import User, Event, Question, VisitCard
 
 
 def serialize_user(user):
@@ -13,6 +13,7 @@ def serialize_event(event):
     return {
         'title': event.title,
         'description': event.description,
+        'date': event.date,
         'time': event.time,
         'speaker': serialize_user(event.speaker),
     }

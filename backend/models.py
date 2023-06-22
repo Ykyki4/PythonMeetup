@@ -17,6 +17,7 @@ class User(models.Model):
 class Event(models.Model):
     title = models.CharField('Заголовок', max_length=100)
     description = models.CharField('Описание', max_length=500)
+    date = models.DateField('Дата проведения')
     time = models.TimeField('Время проведения')
     speaker = models.ForeignKey(User, on_delete=models.CASCADE, verbose_name='Спикер', related_name='events')
 
