@@ -1,3 +1,5 @@
+from django.utils.timezone import localtime, localdate
+
 from .models import User, Event, Question, VisitCard
 
 
@@ -51,7 +53,8 @@ def get_user(telegram_id):
 
 
 def get_events():
-    events = [serialize_event(event) for event in Event.objects.all()]
+    events = [serialize_event(event)
+              for event in Event.objects.filter(time__gte=localtime(), date__gte=localdate())]
     return events
 
 
