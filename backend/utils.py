@@ -90,3 +90,12 @@ def create_visit_card(telegram_id, first_name, last_name, job_title, phone):
     )
 
     return serialize_visit_card(visit_card)
+
+
+def get_visit_cards(telegram_id):
+    try:
+        user = User.objects.get(telegram_id=telegram_id)
+    except User.DoesNotExist:
+        return None
+    visit_cards = [serialize_visit_card(visit_card) for visit_card in VisitCard.objects.exclude(owner=user)]
+    return visit_cards
