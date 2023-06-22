@@ -1,4 +1,4 @@
-from .models import User, Event
+from .models import User, Event, Question
 
 
 def serialize_user(user):
@@ -7,6 +7,15 @@ def serialize_user(user):
         'name': user.name,
         'about': user.about,
         'is_speaker': user.is_speaker,
+    }
+
+
+def serialize_event(event):
+    return {
+        'title': event.title,
+        'description': event.description,
+        'time': event.time,
+        'speaker': serialize_user(event.speaker),
     }
 
 
@@ -21,3 +30,8 @@ def get_user(telegram_id):
         return serialize_user(user)
     except User.DoesNotExist:
         return None
+
+
+def get_events():
+    events = [serialize_event(event) for event in Event.objects.all()]
+    return events
