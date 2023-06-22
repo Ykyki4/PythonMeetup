@@ -49,3 +49,9 @@ def create_question(guest, event, content):
     question = Question.objects.create(guest=guest, event=event, content=content)
     return serialize_question(question)
 
+
+def get_questions(telegram_id):
+    speaker = User.objects.get(telegram_id=telegram_id)
+    events = speaker.events.all()
+    questions = [serialize_question(question) for event in events for question in event.questions.all()]
+    return questions
