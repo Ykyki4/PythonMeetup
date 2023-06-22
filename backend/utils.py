@@ -72,14 +72,20 @@ def create_question(guest, event, content):
 
 
 def get_questions(telegram_id):
-    speaker = User.objects.get(telegram_id=telegram_id)
+    try:
+        speaker = User.objects.get(telegram_id=telegram_id)
+    except User.DoesNotExist:
+        return None
     events = speaker.events.all()
     questions = [serialize_question(question) for event in events for question in event.questions.all()]
     return questions
 
 
 def create_visit_card(telegram_id, first_name, last_name, job_title, phone):
-    user = User.objects.get(telegram_id=telegram_id)
+    try:
+        user = User.objects.get(telegram_id=telegram_id)
+    except User.DoesNotExist:
+        return None
 
     visit_card = VisitCard.objects.create(
         owner=user,
