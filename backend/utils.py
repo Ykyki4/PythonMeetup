@@ -19,6 +19,14 @@ def serialize_event(event):
     }
 
 
+def serialize_question(question):
+    return {
+        'guest': serialize_user(question.guest),
+        'event': serialize_event(question.event),
+        'content': question.content,
+    }
+
+
 def create_user(telegram_id, name, about=None):
     user = User.objects.create(telegram_id=telegram_id, name=name, about=about)
     return serialize_user(user)
@@ -35,3 +43,9 @@ def get_user(telegram_id):
 def get_events():
     events = [serialize_event(event) for event in Event.objects.all()]
     return events
+
+
+def create_question(guest, event, content):
+    question = Question.objects.create(guest=guest, event=event, content=content)
+    return serialize_question(question)
+
