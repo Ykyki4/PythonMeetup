@@ -5,7 +5,6 @@ class User(models.Model):
     telegram_id = models.CharField('Телеграм идентификатор', max_length=10, unique=True)
     name = models.CharField('Имя', max_length=32)
     is_speaker = models.BooleanField('Спикер', default=False)
-    about = models.CharField('О себе', max_length=250, blank=True)
 
     class Meta:
         verbose_name = 'Пользователь'
@@ -40,3 +39,14 @@ class Question(models.Model):
 
     def __str__(self):
         return f"Вопрос к {self.event} от {self.guest}"
+
+
+class VisitCard(models.Model):
+    owner = models.ForeignKey(User, on_delete=models.CASCADE)
+    first_name = models.CharField(max_length=100)
+    last_name = models.CharField(max_length=100)
+    job_title = models.CharField(max_length=100)
+    phone = models.CharField(max_length=20)
+
+    def __str__(self):
+        return f"{self.first_name} {self.last_name}'s Visit Card"
