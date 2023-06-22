@@ -2,9 +2,11 @@ from telegram import KeyboardButton, ReplyKeyboardMarkup
 
 main_menu_buttons = {
     'program_button': '📋Программа',
-    'ask_question_button': '🗣Задать вопрос спикеру',
+    'cards_exchange': ' 🪪Обмен визитками',
     'my_question_button': '❓Мои вопросы',
+    'donation_button': '💵Поддержать проект',
 }
+
 
 def set_keyboards_buttons(buttons):
     keyboard = []
