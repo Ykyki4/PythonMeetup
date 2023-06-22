@@ -1,11 +1,9 @@
 from enum import Enum
-from functools import partial
 
-from telegram import ReplyKeyboardMarkup, ReplyKeyboardRemove, InlineKeyboardButton, InlineKeyboardMarkup, \
-    KeyboardButton
+from telegram import ReplyKeyboardRemove, InlineKeyboardButton, InlineKeyboardMarkup
 
 
-from .keyboards import main_menu_buttons
+from .keyboards import main_menu_buttons, get_keyboard
 from backend.utils import create_user, get_user
 
 
@@ -13,24 +11,6 @@ class RegistrationState(Enum):
     PROCESSED_REGISTRATION = 1
     ASKED_NEW_NAME = 2
     ASKED_NAME = 3
-
-
-def set_keyboards_buttons(buttons):
-    keyboard = []
-
-    for button in buttons:
-        keyboard.append(KeyboardButton(button))
-
-    return keyboard
-
-
-def get_keyboard(buttons, one_time_keyboard=False):
-    reply_markup = ReplyKeyboardMarkup(
-        keyboard=[set_keyboards_buttons(buttons)],
-        resize_keyboard=True,
-        one_time_keyboard=one_time_keyboard,
-    )
-    return reply_markup
 
 
 def start(update, context):
@@ -107,7 +87,3 @@ def handle_new_name(update, context):
     )
     create_user(user_id, user_name)
     return RegistrationState.PROCESSED_REGISTRATION
-
-
-def handle_main_menu(update, context):
-    pass
