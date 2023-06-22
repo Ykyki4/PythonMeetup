@@ -1,4 +1,4 @@
-from .models import User
+from .models import User, Event
 
 
 def serialize_user(user):
@@ -6,6 +6,7 @@ def serialize_user(user):
         'telegram_id': user.telegram_id,
         'name': user.name,
         'about': user.about,
+        'is_speaker': user.is_speaker,
     }
 
 
