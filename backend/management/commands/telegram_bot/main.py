@@ -3,7 +3,10 @@ from enum import Enum
 from environs import Env
 from telegram.ext import Updater, CommandHandler, MessageHandler, Filters, ConversationHandler, CallbackQueryHandler
 
+from .keyboards import main_menu_buttons
 from .registration import start, handle_name, handle_new_name, RegistrationState
+from .program import ProgramState, handle_program, handle_selected_program, handle_date, \
+    handle_speaker
 
 
 def main():
@@ -17,12 +20,12 @@ def main():
     conversation_handler = ConversationHandler(
         entry_points=[CommandHandler('start', start)],
         states={
-            # RegistrationState.PROCESSED_REGISTRATION: [
-            #     MessageHandler(
-            #         Filters.regex(''.join(menu_selection_buttons)),
-            #         handle_main_menu
-            #     )
-            # ],
+            RegistrationState.PROCESSED_REGISTRATION: [
+                MessageHandler(
+                    Filters.regex(''.join(main_menu_buttons['program_button'])),
+                    handle_program
+                ),
+            ],
             RegistrationState.ASKED_NAME: [
                 CallbackQueryHandler(
                     handle_name
@@ -33,6 +36,38 @@ def main():
                     Filters.text,
                     handle_new_name,
                 )
+            ],
+            ProgramState.SELECTED_PROGRAM: [
+                MessageHandler(
+                    Filters.text,
+                    handle_selected_program
+                ),
+            ],
+            ProgramState.SELECTED_DATA: [
+                CallbackQueryHandler(
+                    handle_date,
+                    pattern='date'
+                ),
+                CallbackQueryHandler(
+                    handle_speaker,
+                    pattern='speaker'
+                ),
+                CallbackQueryHandler(
+                    handle_program,
+                    pattern='^back_to_programs$'
+                ),
+            ],
+            ProgramState.HANDLED_DATE: [
+                CallbackQueryHandler(
+                    handle_selected_program,
+                    pattern='^back_to_program$'
+                ),
+            ],
+            ProgramState.HANDLED_SPEAKER: [
+                CallbackQueryHandler(
+                    handle_selected_program,
+                    pattern='^back_to_program$'
+                ),
             ],
         },
         fallbacks=[
