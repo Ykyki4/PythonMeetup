@@ -1,3 +1,5 @@
+from django.utils.timezone import localtime, localdate
+
 from .models import User, Event, Question, VisitCard
 
 
@@ -51,7 +53,8 @@ def get_user(telegram_id):
 
 
 def get_events():
-    events = [serialize_event(event) for event in Event.objects.all()]
+    events = [serialize_event(event)
+              for event in Event.objects.filter(time__gte=localtime(), date__gte=localdate())]
     return events
 
 
@@ -69,14 +72,20 @@ def create_question(guest, event, content):
 
 
 def get_questions(telegram_id):
-    speaker = User.objects.get(telegram_id=telegram_id)
+    try:
+        speaker = User.objects.get(telegram_id=telegram_id)
+    except User.DoesNotExist:
+        return None
     events = speaker.events.all()
     questions = [serialize_question(question) for event in events for question in event.questions.all()]
     return questions
 
 
 def create_visit_card(telegram_id, first_name, last_name, job_title, phone):
-    user = User.objects.get(telegram_id=telegram_id)
+    try:
+        user = User.objects.get(telegram_id=telegram_id)
+    except User.DoesNotExist:
+        return None
 
     visit_card = VisitCard.objects.create(
         owner=user,
@@ -87,3 +96,12 @@ def create_visit_card(telegram_id, first_name, last_name, job_title, phone):
     )
 
     return serialize_visit_card(visit_card)
+
+
+def get_visit_cards(telegram_id):
+    try:
+        user = User.objects.get(telegram_id=telegram_id)
+    except User.DoesNotExist:
+        return None
+    visit_cards = [serialize_visit_card(visit_card) for visit_card in VisitCard.objects.exclude(owner=user)]
+    return visit_cards
