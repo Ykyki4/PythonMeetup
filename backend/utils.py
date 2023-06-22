@@ -55,6 +55,11 @@ def get_events():
     return events
 
 
+def get_event(title):
+    event = Event.objects.get(title=title)
+    return serialize_event(event)
+
+
 def create_question(guest, event, content):
     question = Question.objects.create(guest=guest, event=event, content=content)
     return serialize_question(question)
