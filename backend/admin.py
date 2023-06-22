@@ -1,4 +1,6 @@
 from django.contrib import admin
+from django import forms
+
 from .models import User, Question, Event, VisitCard
 
 
@@ -9,7 +11,9 @@ class UserAdmin(admin.ModelAdmin):
 
 @admin.register(Event)
 class EventAdmin(admin.ModelAdmin):
-    pass
+    def render_change_form(self, request, context, *args, **kwargs):
+        context['adminform'].form.fields['speaker'].queryset = User.objects.filter(is_speaker=True)
+        return super(EventAdmin, self).render_change_form(request, context, args, kwargs)
 
 
 @admin.register(Question)
@@ -18,5 +22,5 @@ class QuestionAdmin(admin.ModelAdmin):
 
 
 @admin.register(VisitCard)
-class QuestionAdmin(admin.ModelAdmin):
+class VisitAdmin(admin.ModelAdmin):
     pass
