@@ -27,6 +27,16 @@ def serialize_question(question):
     }
 
 
+def serialize_visit_card(visit_card):
+    return {
+        'owner': visit_card.owner,
+        'first_name': visit_card.first_name,
+        'last_name': visit_card.last_name,
+        'job_title': visit_card.job_title,
+        'phone': visit_card.phone,
+    }
+
+
 def create_user(telegram_id, name):
     user = User.objects.create(telegram_id=telegram_id, name=name)
     return serialize_user(user)
@@ -55,3 +65,17 @@ def get_questions(telegram_id):
     events = speaker.events.all()
     questions = [serialize_question(question) for event in events for question in event.questions.all()]
     return questions
+
+
+def create_visit_card(telegram_id, first_name, last_name, job_title, phone):
+    user = User.objects.get(telegram_id=telegram_id)
+
+    visit_card = VisitCard.objects.create(
+        owner=user,
+        first_name=first_name,
+        last_name=last_name,
+        job_title=job_title,
+        phone=phone
+    )
+
+    return serialize_visit_card(visit_card)
