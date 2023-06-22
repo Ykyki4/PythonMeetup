@@ -5,7 +5,6 @@ def serialize_user(user):
     return {
         'telegram_id': user.telegram_id,
         'name': user.name,
-        'about': user.about,
         'is_speaker': user.is_speaker,
     }
 
@@ -27,8 +26,8 @@ def serialize_question(question):
     }
 
 
-def create_user(telegram_id, name, about=None):
-    user = User.objects.create(telegram_id=telegram_id, name=name, about=about)
+def create_user(telegram_id, name):
+    user = User.objects.create(telegram_id=telegram_id, name=name)
     return serialize_user(user)
 
 
