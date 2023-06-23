@@ -54,7 +54,7 @@ def get_user(telegram_id):
 
 def get_events():
     events = [serialize_event(event)
-              for event in Event.objects.filter(time__gte=localtime(), date__gte=localdate())]
+              for event in Event.objects.filter(date__gte=localdate())]
     return events
 
 
