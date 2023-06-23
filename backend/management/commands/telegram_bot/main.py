@@ -43,6 +43,12 @@ def main():
                     handle_selected_program
                 ),
             ],
+            ProgramState.ISSUED_MAIN_MENU: [
+                MessageHandler(
+                    Filters.regex(''.join(main_menu_buttons['program_button'])),
+                    handle_program
+                ),
+            ],
             ProgramState.SELECTED_DATA: [
                 CallbackQueryHandler(
                     handle_date,

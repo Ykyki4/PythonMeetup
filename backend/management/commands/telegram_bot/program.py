@@ -3,7 +3,7 @@ from enum import Enum
 
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup, ReplyKeyboardRemove
 
-from backend.management.commands.telegram_bot.keyboards import get_keyboard
+from .keyboards import get_keyboard, main_menu_buttons
 from backend.utils import get_events, get_event
 
 
@@ -13,12 +13,14 @@ class ProgramState(Enum):
     SELECTED_DATA = 3
     HANDLED_DATE = 4
     HANDLED_SPEAKER = 5
+    ISSUED_MAIN_MENU = 6
 
 
 def handle_program(update, context):
     query = update.callback_query
     events = get_events()
     events_titles = [event['title'] for event in events]
+    events_titles.append('Назад')
     text = 'Выберите интересующее событие: '
     if query:
         message_id = query.message.message_id
@@ -26,12 +28,12 @@ def handle_program(update, context):
         context.bot.send_message(
             update.effective_chat.id,
             text=text,
-            reply_markup=get_keyboard(events_titles, one_time_keyboard=True)
+            reply_markup=get_keyboard(events_titles)
         )
     else:
         update.message.reply_text(
             text=text,
-            reply_markup=get_keyboard(events_titles, one_time_keyboard=True),
+            reply_markup=get_keyboard(events_titles),
         )
 
     return ProgramState.SELECTED_PROGRAM
@@ -73,6 +75,12 @@ def handle_selected_program(update, context):
             )
 
             return ProgramState.SELECTED_DATA
+        elif text == 'Назад':
+            update.message.reply_text(
+                text='Выберите один из следующих пунктов: ',
+                reply_markup=get_keyboard(list(main_menu_buttons.values())),
+            )
+            return ProgramState.ISSUED_MAIN_MENU
 
         else:
             return ProgramState.SELECTED_PROGRAM
