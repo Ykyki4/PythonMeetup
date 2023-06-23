@@ -30,6 +30,16 @@ def main():
                     start_exchange
                 ),
             ],
+            ProgramState.ISSUED_MAIN_MENU: [
+                MessageHandler(
+                    Filters.regex(''.join(main_menu_buttons['program_button'])),
+                    handle_program
+                ),
+                MessageHandler(
+                    Filters.regex(''.join(main_menu_buttons['cards_exchange_button'])),
+                    start_exchange
+                ),
+            ],
             RegistrationState.ASKED_NAME: [
                 CallbackQueryHandler(
                     handle_name
@@ -45,16 +55,6 @@ def main():
                 MessageHandler(
                     Filters.text,
                     handle_selected_program
-                ),
-            ],
-            ProgramState.ISSUED_MAIN_MENU: [
-                MessageHandler(
-                    Filters.regex(''.join(main_menu_buttons['program_button'])),
-                    handle_program
-                ),
-                MessageHandler(
-                    Filters.regex(''.join(main_menu_buttons['cards_exchange_button'])),
-                    start_exchange
                 ),
             ],
             ProgramState.SELECTED_DATA: [
