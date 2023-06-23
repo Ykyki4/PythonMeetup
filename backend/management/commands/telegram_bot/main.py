@@ -13,8 +13,6 @@ from .program import ProgramState, handle_program, handle_selected_program, hand
 def main():
     env = Env()
     env.read_env()
-    print(''.join(main_menu_buttons['cards_exchange_button']))
-    print(''.join(main_menu_buttons['program_button']))
     bot_token = env('TELEGRAM_TOKEN')
     updater = Updater(token=bot_token, use_context=True)
     dispatcher = updater.dispatcher
