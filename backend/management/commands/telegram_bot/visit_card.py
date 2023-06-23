@@ -1,74 +1,82 @@
+from enum import Enum
+
 from environs import Env
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import Updater, CommandHandler, ConversationHandler, CallbackQueryHandler, MessageHandler, Filters
 
 from backend.models import VisitCard, User
 
-VISIT_CARD_AGREE, VISIT_CARD_DETAILS = range(2)
+
+class ExchangeState(Enum):
+    VISIT_CARD_AGREE = 1
+    VISIT_CARD_DETAILS = 2
 
 
 def start_exchange(update, context):
-    user = User.objects.filter(telegram_id=str(update.effective_user.id)).first()
-    if not user:
+    user = User.objects.get(telegram_id=str(update.effective_user.id))
+    context.user_data['user_profile'] = user
+    existing_card = VisitCard.objects.filter(owner=user).first()
+    if existing_card:
+        query = update.callback_query
+        keyboard = [
+            [
+                InlineKeyboardButton('Обновить', callback_data='update'),
+                InlineKeyboardButton('Использовать текущую', callback_data='use_current'),
+            ]
+        ]
+        reply_markup = InlineKeyboardMarkup(keyboard)
         context.bot.send_message(
             chat_id=update.effective_chat.id,
-            text="Сначала зарегистрируйтесь, чтобы отправлять визитки!"
+            text='У вас уже есть визитка. Хотите обновить ее или использовать текущую?',
+            reply_markup=reply_markup
         )
-        return ConversationHandler.END
+        return ExchangeState.VISIT_CARD_AGREE
     else:
         context.user_data['user_profile'] = user
-        existing_card = VisitCard.objects.filter(owner=user).first()
-        if existing_card:
-            query = update.callback_query
-            keyboard = [
-                [
-                    InlineKeyboardButton("Обновить", callback_data='update'),
-                    InlineKeyboardButton("Использовать текущую", callback_data='use_current'),
-                ]
+        keyboard = [
+            [
+                InlineKeyboardButton('Да', callback_data='yes'),
+                InlineKeyboardButton('Нет', callback_data='no'),
             ]
-            reply_markup = InlineKeyboardMarkup(keyboard)
-            context.bot.send_message(chat_id=update.effective_chat.id,
-                                      text="У вас уже есть визитка. Хотите обновить ее или использовать текущую?",
-                                      reply_markup=reply_markup)
-            return VISIT_CARD_AGREE
-        else:
-            context.user_data['user_profile'] = user
-            keyboard = [
-                [
-                    InlineKeyboardButton("Да", callback_data='yes'),
-                    InlineKeyboardButton("Нет", callback_data='no'),
-                ]
-            ]
-            reply_markup = InlineKeyboardMarkup(keyboard)
-            context.bot.send_message(chat_id=update.effective_chat.id,
-                                     text="Вы хотите обменяться визитками?",
-                                     reply_markup=reply_markup)
-        return VISIT_CARD_AGREE
+        ]
+        reply_markup = InlineKeyboardMarkup(keyboard)
+        context.bot.send_message(
+            chat_id=update.effective_chat.id,
+            text='Вы хотите обменяться визитками?',
+            reply_markup=reply_markup
+        )
+    return ExchangeState.VISIT_CARD_AGREE
 
 
 def handle_exchange_response(update, context):
     query = update.callback_query
     if query.data == 'yes' or query.data == 'update':
-        context.bot.edit_message_text(chat_id=query.message.chat_id,
-                                      message_id=query.message.message_id,
-                                      text="Пожалуйста, введите свои данные в следующем формате:\n\n"
-                                           "Имя Фамилия\n"
-                                           "Должность\n"
-                                           "Телефон")
-        return VISIT_CARD_DETAILS
+        context.bot.edit_message_text(
+            chat_id=query.message.chat_id,
+            message_id=query.message.message_id,
+            text='Пожалуйста, введите свои данные в следующем формате:\n\n'
+                 'Имя Фамилия\n'
+                 'Должность\n'
+                 'Телефон'
+        )
+        return ExchangeState.VISIT_CARD_DETAILS
     elif query.data == 'use_current':
         all_cards = VisitCard.objects.all()
-        all_cards_text = ""
+        all_cards_text = ''
         for card in all_cards:
-            all_cards_text += f"Имя: {card.first_name} {card.last_name}\nДолжность: {card.job_title}\nТелефон: {card.phone}\n\n"
-        context.bot.edit_message_text(chat_id=query.message.chat_id,
-                                      message_id=query.message.message_id,
-                                      text="Ваша текущая визитка будет использована. Вот все визитки:\n\n" + all_cards_text)
+            all_cards_text += f'Имя: {card.first_name} {card.last_name}\nДолжность: {card.job_title}\nТелефон: {card.phone}\n\n'
+        context.bot.edit_message_text(
+            chat_id=query.message.chat_id,
+            message_id=query.message.message_id,
+            text='Ваша текущая визитка будет использована. Вот все визитки:\n\n' + all_cards_text
+        )
         return ConversationHandler.END
     else:
-        context.bot.edit_message_text(chat_id=query.message.chat_id,
-                                      message_id=query.message.message_id,
-                                      text="ОК, в любое время вы можете начать обмен визитками.")
+        context.bot.edit_message_text(
+            chat_id=query.message.chat_id,
+            message_id=query.message.message_id,
+            text='ОК, в любое время вы можете начать обмен визитками.'
+        )
         return ConversationHandler.END
 
 
@@ -77,7 +85,7 @@ def handle_details(update, context):
 
     if len(details) < 3:
         update.message.reply_text('Введите все данные в нужном формате, пожалуйста.')
-        return VISIT_CARD_DETAILS
+        return ExchangeState.VISIT_CARD_DETAILS
 
     card = VisitCard(owner=context.user_data['user_profile'],
                      first_name=details[0].split()[0],
@@ -88,9 +96,9 @@ def handle_details(update, context):
 
     all_cards = VisitCard.objects.all()
 
-    all_cards_text = ""
+    all_cards_text = ''
     for card in all_cards:
-        all_cards_text += f"Имя: {card.first_name} {card.last_name}\nДолжность: {card.job_title}\nТелефон: {card.phone}\n\n"
+        all_cards_text += f'Имя: {card.first_name} {card.last_name}\nДолжность: {card.job_title}\nТелефон: {card.phone}\n\n'
 
     update.message.reply_text('Ваша визитка сохранена. Вот все визитки:\n\n' + all_cards_text)
 
