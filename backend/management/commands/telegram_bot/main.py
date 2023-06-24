@@ -59,7 +59,7 @@ def main():
             ProgramState.SELECTED_DATA: [
                 CallbackQueryHandler(
                     handle_date,
-                    pattern='date'
+                    pattern='time'
                 ),
                 CallbackQueryHandler(
                     handle_speaker,

@@ -56,7 +56,7 @@ def handle_selected_program(update, context):
     titled_text = 'Загружаю мероприятие'
     keyboard = [
         [
-            InlineKeyboardButton('Дата и время', callback_data='date'),
+            InlineKeyboardButton('Время', callback_data='time'),
             InlineKeyboardButton('Спикер', callback_data='speaker'),
             InlineKeyboardButton('Назад', callback_data='back_to_programs')
         ]
