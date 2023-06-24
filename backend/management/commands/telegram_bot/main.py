@@ -21,7 +21,7 @@ def main():
     conversation_handler = ConversationHandler(
         entry_points=[CommandHandler('start', start)],
         states={
-            MainMenuState.HandleMainMenu: [
+            MainMenuState.HANDLE_MAIN_MENU: [
                 MessageHandler(
                     Filters.regex(''.join(main_menu_buttons['program_button'])),
                     handle_program

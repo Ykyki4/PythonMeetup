@@ -4,7 +4,7 @@ from .keyboards import get_keyboard, main_menu_buttons
 
 
 class MainMenuState(Enum):
-    HandleMainMenu = 1
+    HANDLE_MAIN_MENU = 1
 
 
 def send_main_menu(update, context):
@@ -21,4 +21,4 @@ def send_main_menu(update, context):
             text='Выберите один из следующих пунктов: ',
             reply_markup=get_keyboard(list(main_menu_buttons.values())),
         )
-    return MainMenuState.HandleMainMenu
+    return MainMenuState.HANDLE_MAIN_MENU

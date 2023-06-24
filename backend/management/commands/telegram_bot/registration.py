@@ -66,7 +66,7 @@ def handle_name(update, context):
         reply_markup = get_keyboard(list(main_menu_buttons.values()))
         context.bot.sendMessage(update.effective_chat.id, text=message, reply_markup=reply_markup)
         create_user(user_id, user_name)
-        return MainMenuState.HandleMainMenu
+        return MainMenuState.HANDLE_MAIN_MENU
 
     else:
         query.edit_message_text(text='Введите, пожалуйста, ваше имя и фамилию')
