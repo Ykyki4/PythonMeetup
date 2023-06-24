@@ -1,10 +1,11 @@
+import textwrap
 import time
 from enum import Enum
 
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup, ReplyKeyboardRemove
 
 from .keyboards import get_keyboard, main_menu_buttons
-from backend.utils import get_events, get_event
+from backend.utils import get_today_meetup, get_event, create_question, get_user
 
 
 class ProgramState(Enum):
@@ -14,14 +15,29 @@ class ProgramState(Enum):
     HANDLED_DATE = 4
     HANDLED_SPEAKER = 5
     ISSUED_MAIN_MENU = 6
+    SAVE_QUESTION = 8
 
 
 def handle_program(update, context):
     query = update.callback_query
-    events = get_events()
-    events_titles = [event['title'] for event in events]
+    meetup = get_today_meetup()
+    if not meetup:
+        update.message.reply_text(
+            text='Программы на сегодня нет( Попробуйте позже',
+        )
+        update.message.reply_text(
+            text='Выберите один из следующих пунктов: ',
+            reply_markup=get_keyboard(list(main_menu_buttons.values())),
+        )
+        return ProgramState.ISSUED_MAIN_MENU
+
+    events_titles = [event['title'] for event in meetup['events']]
     events_titles.append('Назад')
-    text = 'Выберите интересующее событие: '
+
+    text = textwrap.dedent(f'''
+        Сегодняшняя программа: {meetup['title']}\n    
+        Выберите интересующее событие: 
+    ''')
     if query:
         message_id = query.message.message_id
         context.bot.delete_message(update.effective_chat.id, message_id)
@@ -97,7 +113,6 @@ def handle_date(update, context):
     reply_markup = InlineKeyboardMarkup(keyboard)
     query.edit_message_text(
         text=f'Мероприятие {event["title"]} будет проходить '
-             f'{event["date"].strftime("%d-%m-%Y")} '
              f'в {event["time"].strftime("%H:%M")}',
         reply_markup=reply_markup
     )
@@ -112,7 +127,7 @@ def handle_speaker(update, context):
     keyboard = [
         [
             InlineKeyboardButton('Назад', callback_data='back_to_program'),
-            InlineKeyboardButton('Задать вопрос спикеру', callback_data='ask_speaker')
+            InlineKeyboardButton('Задать вопрос спикеру', callback_data='ask_question')
         ]
     ]
     reply_markup = InlineKeyboardMarkup(keyboard)
@@ -125,3 +140,25 @@ def handle_speaker(update, context):
     return ProgramState.HANDLED_SPEAKER
 
 
+def handle_ask_question(update, context):
+    query = update.callback_query
+    reply_markup = InlineKeyboardMarkup([[InlineKeyboardButton('Назад', callback_data='back_to_speaker')]])
+    query.edit_message_text(
+        text=f'Введите свой вопрос.',
+        reply_markup=reply_markup
+    )
+
+    return ProgramState.SAVE_QUESTION
+
+
+def handle_save_question(update, context):
+    content = update.message.text
+    user_id = update.message.from_user.id
+    event = context.user_data['event']
+    question = create_question(user_id, event['title'], content)
+
+    update.message.reply_text(
+        'Ваш вопрос был отправлен. Спасибо за участие!'
+    )
+
+    return handle_program(update, context)

@@ -7,7 +7,7 @@ from .visit_card import start_exchange, ExchangeState, handle_exchange_response,
 from .keyboards import main_menu_buttons
 from .registration import start, handle_name, handle_new_name, RegistrationState
 from .program import ProgramState, handle_program, handle_selected_program, handle_date, \
-    handle_speaker
+    handle_speaker, handle_ask_question, handle_save_question
 
 
 def main():
@@ -81,6 +81,20 @@ def main():
                 CallbackQueryHandler(
                     handle_selected_program,
                     pattern='^back_to_program$'
+                ),
+                CallbackQueryHandler(
+                    handle_ask_question,
+                    pattern='ask_question'
+                ),
+            ],
+            ProgramState.SAVE_QUESTION: [
+                CallbackQueryHandler(
+                    handle_speaker,
+                    pattern='^back_to_speaker$'
+                ),
+                MessageHandler(
+                    Filters.text,
+                    handle_save_question,
                 ),
             ],
             ExchangeState.VISIT_CARD_AGREE: [

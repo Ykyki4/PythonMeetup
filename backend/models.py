@@ -14,10 +14,22 @@ class User(models.Model):
         return f'{self.name}'
 
 
+class Meetup(models.Model):
+    title = models.CharField('Заголовок', max_length=100)
+    date = models.DateField('Дата проведения')
+
+    class Meta:
+        verbose_name = 'Программа'
+        verbose_name_plural = 'Программы'
+
+    def __str__(self):
+        return f'{self.title}'
+
+
 class Event(models.Model):
     title = models.CharField('Заголовок', max_length=100, unique=True)
     description = models.CharField('Описание', max_length=500)
-    date = models.DateField('Дата проведения')
+    meetup = models.ForeignKey(Meetup, on_delete=models.CASCADE, verbose_name='Митап', related_name='events')
     time = models.TimeField('Время проведения')
     speaker = models.ForeignKey(User, on_delete=models.CASCADE, verbose_name='Спикер', related_name='events')
 

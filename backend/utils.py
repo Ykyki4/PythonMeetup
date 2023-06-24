@@ -1,6 +1,6 @@
 from django.utils.timezone import localtime, localdate
 
-from .models import User, Event, Question, VisitCard
+from .models import User, Event, Question, VisitCard, Meetup
 
 
 def serialize_user(user):
@@ -15,7 +15,6 @@ def serialize_event(event):
     return {
         'title': event.title,
         'description': event.description,
-        'date': event.date,
         'time': event.time,
         'speaker': serialize_user(event.speaker),
     }
@@ -39,6 +38,14 @@ def serialize_visit_card(visit_card):
     }
 
 
+def serialize_meetup(meetup):
+    return {
+        'title': meetup.title,
+        'date': meetup.date,
+        'events': [serialize_event(event) for event in meetup.events.all()]
+    }
+
+
 def create_user(telegram_id, name):
     user = User.objects.create(telegram_id=telegram_id, name=name)
     return serialize_user(user)
@@ -52,10 +59,12 @@ def get_user(telegram_id):
         return None
 
 
-def get_events():
-    events = [serialize_event(event)
-              for event in Event.objects.filter(date__gte=localdate())]
-    return events
+def get_today_meetup():
+    try:
+        meetup = Meetup.objects.get(date=localdate())
+        return serialize_meetup(meetup)
+    except Meetup.DoesNotExist:
+        return None
 
 
 def get_event(title):
@@ -66,7 +75,9 @@ def get_event(title):
         return None
 
 
-def create_question(guest, event, content):
+def create_question(telegram_id, event_title, content):
+    guest = User.objects.get(telegram_id=telegram_id)
+    event = Event.objects.get(title=event_title)
     question = Question.objects.create(guest=guest, event=event, content=content)
     return serialize_question(question)
 

@@ -1,11 +1,16 @@
 from django.contrib import admin
 from django import forms
 
-from .models import User, Question, Event, VisitCard
+from .models import User, Question, Meetup, Event, VisitCard
 
 
 @admin.register(User)
 class UserAdmin(admin.ModelAdmin):
+    pass
+
+
+@admin.register(Meetup)
+class MeetupAdmin(admin.ModelAdmin):
     pass
 
 
