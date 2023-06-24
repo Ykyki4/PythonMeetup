@@ -1,16 +1,19 @@
+import textwrap
 from enum import Enum
 
 from environs import Env
+from more_itertools import chunked
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup, KeyboardButton, ReplyKeyboardMarkup
 from telegram.ext import Updater, CommandHandler, ConversationHandler, CallbackQueryHandler, MessageHandler, Filters
 
-from .keyboards import get_keyboard, main_menu_buttons
+from .keyboards import get_keyboard, main_menu_buttons, get_questions_keyboard
 from .program import handle_program, ProgramState
-from backend.utils import get_current_event, create_question
+from backend.utils import get_current_event, create_question, get_questions
 
 
 class QuestionsState(Enum):
     SAVE_QUESTION = 1
+    ASKED_QUESTIONS = 2
 
 
 def handle_ask_question(update, context):
@@ -57,6 +60,71 @@ def handle_save_question(update, context):
     )
 
     return ProgramState.ISSUED_MAIN_MENU
+
+
+def get_asked_questions_text(chunked_questions, chunk):
+    if len(chunked_questions) == 0:
+        text = 'Вопросы не найдены.'
+    else:
+        text = ''
+        for question in chunked_questions[chunk]:
+            text += textwrap.dedent(f'''
+                Гость: {question['guest']['name']}
+                Вопрос: {question['content']}\n
+            ''')
+    return text
+
+
+def start_asked_questions(update, context):
+    user_id = update.message.from_user.id
+    questions = get_questions(user_id)
+    chunk_size = 5
+    chunk = 0
+    chunked_questions = list(chunked(questions, chunk_size))
+
+    reply_markup = get_questions_keyboard(chunked_questions, chunk)
+    text = get_asked_questions_text(chunked_questions, chunk)
+
+    context.user_data['chunk'] = chunk
+    context.user_data['chunked_questions'] = chunked_questions
+    update.message.reply_text(
+        text=text,
+        reply_markup=reply_markup
+    )
+
+    return QuestionsState.ASKED_QUESTIONS
+
+
+def handle_asked_questions(update, context):
+    query = update.callback_query
+    if query.data == 'back':
+        message_id = query.message.message_id
+        context.bot.delete_message(update.effective_chat.id, message_id)
+
+        context.bot.send_message(
+            update.effective_chat.id,
+            text='Выберите один из следующих пунктов: ',
+            reply_markup=get_keyboard(list(main_menu_buttons.values())),
+        )
+        return ProgramState.ISSUED_MAIN_MENU
+    elif query.data == "⬅️":
+        context.user_data['chunk'] -= 1
+    elif query.data == "➡️":
+        context.user_data['chunk'] += 1
+
+    chunked_questions = context.user_data['chunked_questions']
+    chunk = context.user_data['chunk']
+
+    reply_markup = get_questions_keyboard(chunked_questions, chunk)
+    text = get_asked_questions_text(chunked_questions, chunk)
+
+    query.edit_message_text(
+        text=text,
+        reply_markup=reply_markup
+    )
+
+    return QuestionsState.ASKED_QUESTIONS
+
 
 # from django.utils import timezone
 #

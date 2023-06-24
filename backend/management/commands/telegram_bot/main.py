@@ -8,7 +8,8 @@ from .keyboards import main_menu_buttons
 from .registration import start, handle_name, handle_new_name, RegistrationState
 from .program import ProgramState, handle_program, handle_selected_program, handle_date, \
     handle_speaker
-from .questions import handle_ask_question, handle_save_question, QuestionsState
+from .questions import handle_ask_question, handle_save_question, QuestionsState, start_asked_questions, \
+    handle_asked_questions
 
 
 def main():
@@ -31,8 +32,12 @@ def main():
                     start_exchange
                 ),
                 MessageHandler(
-                    Filters.regex(''.join(main_menu_buttons['ask_question'])),
+                    Filters.regex(''.join(main_menu_buttons['ask_question_button'])),
                     handle_ask_question,
+                ),
+                MessageHandler(
+                    Filters.regex(''.join(main_menu_buttons['asked_questions_button'])),
+                    start_asked_questions,
                 ),
             ],
             ProgramState.ISSUED_MAIN_MENU: [
@@ -45,8 +50,12 @@ def main():
                     start_exchange
                 ),
                 MessageHandler(
-                    Filters.regex(''.join(main_menu_buttons['ask_question'])),
+                    Filters.regex(''.join(main_menu_buttons['ask_question_button'])),
                     handle_ask_question,
+                ),
+                MessageHandler(
+                    Filters.regex(''.join(main_menu_buttons['asked_questions_button'])),
+                    start_asked_questions,
                 ),
             ],
             RegistrationState.ASKED_NAME: [
@@ -101,6 +110,11 @@ def main():
                     Filters.text,
                     handle_save_question,
                 ),
+            ],
+            QuestionsState.ASKED_QUESTIONS: [
+                CallbackQueryHandler(
+                    handle_asked_questions
+                )
             ],
             ExchangeState.VISIT_CARD_AGREE: [
                 CallbackQueryHandler(

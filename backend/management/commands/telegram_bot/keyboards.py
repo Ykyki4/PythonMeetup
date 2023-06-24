@@ -1,10 +1,11 @@
-from telegram import KeyboardButton, ReplyKeyboardMarkup
+from telegram import KeyboardButton, ReplyKeyboardMarkup, InlineKeyboardButton, InlineKeyboardMarkup
+from more_itertools import chunked
 
 main_menu_buttons = {
     'program_button': '📋Программа',
     'cards_exchange_button': '🪪Обмен визитками',
-    'my_question_button': '❓Мои вопросы',
-    'ask_question': 'Задать вопрос спикеру',
+    'asked_questions_button': '❓Мои вопросы',
+    'ask_question_button': 'Задать вопрос спикеру',
     'donation_button': '💵Поддержать проект',
 }
 
@@ -25,3 +26,20 @@ def get_keyboard(buttons, one_time_keyboard=False):
         one_time_keyboard=one_time_keyboard,
     )
     return reply_markup
+
+
+def get_questions_keyboard(questions, chunk):
+    chunk_size = 5
+    chunked_requests = list(chunked(questions, chunk_size))
+
+    arrows_keyboard = []
+    arrows_keyboard.append(InlineKeyboardButton('⬅️', callback_data='⬅️')) \
+        if chunk != 0 else None
+    arrows_keyboard.append(InlineKeyboardButton('➡️', callback_data='➡️')) \
+        if chunk + 1 != len(questions) else None
+    keyboard = [
+        arrows_keyboard,
+        [InlineKeyboardButton('В главное меню', callback_data='back')],
+    ]
+
+    return InlineKeyboardMarkup(keyboard)
