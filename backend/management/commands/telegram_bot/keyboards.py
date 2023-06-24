@@ -5,7 +5,7 @@ main_menu_buttons = {
     'program_button': '📋Программа',
     'cards_exchange_button': '🪪Обмен визитками',
     'asked_questions_button': '❓Мои вопросы',
-    'ask_question_button': 'Задать вопрос спикеру',
+    'ask_question_button': '🗣Задать вопрос спикеру',
     'donation_button': '💵Поддержать проект',
 }
 
