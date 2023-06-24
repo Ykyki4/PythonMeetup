@@ -127,7 +127,6 @@ def handle_speaker(update, context):
     keyboard = [
         [
             InlineKeyboardButton('Назад', callback_data='back_to_program'),
-            InlineKeyboardButton('Задать вопрос спикеру', callback_data='ask_question')
         ]
     ]
     reply_markup = InlineKeyboardMarkup(keyboard)
@@ -138,27 +137,3 @@ def handle_speaker(update, context):
         reply_markup=reply_markup
     )
     return ProgramState.HANDLED_SPEAKER
-
-
-def handle_ask_question(update, context):
-    query = update.callback_query
-    reply_markup = InlineKeyboardMarkup([[InlineKeyboardButton('Назад', callback_data='back_to_speaker')]])
-    query.edit_message_text(
-        text=f'Введите свой вопрос.',
-        reply_markup=reply_markup
-    )
-
-    return ProgramState.SAVE_QUESTION
-
-
-def handle_save_question(update, context):
-    content = update.message.text
-    user_id = update.message.from_user.id
-    event = context.user_data['event']
-    question = create_question(user_id, event['title'], content)
-
-    update.message.reply_text(
-        'Ваш вопрос был отправлен. Спасибо за участие!'
-    )
-
-    return handle_program(update, context)

@@ -7,7 +7,8 @@ from .visit_card import start_exchange, ExchangeState, handle_exchange_response,
 from .keyboards import main_menu_buttons
 from .registration import start, handle_name, handle_new_name, RegistrationState
 from .program import ProgramState, handle_program, handle_selected_program, handle_date, \
-    handle_speaker, handle_ask_question, handle_save_question
+    handle_speaker
+from .questions import handle_ask_question, handle_save_question, QuestionsState
 
 
 def main():
@@ -29,6 +30,10 @@ def main():
                     Filters.regex(''.join(main_menu_buttons['cards_exchange_button'])),
                     start_exchange
                 ),
+                MessageHandler(
+                    Filters.regex(''.join(main_menu_buttons['ask_question'])),
+                    handle_ask_question,
+                ),
             ],
             ProgramState.ISSUED_MAIN_MENU: [
                 MessageHandler(
@@ -38,6 +43,10 @@ def main():
                 MessageHandler(
                     Filters.regex(''.join(main_menu_buttons['cards_exchange_button'])),
                     start_exchange
+                ),
+                MessageHandler(
+                    Filters.regex(''.join(main_menu_buttons['ask_question'])),
+                    handle_ask_question,
                 ),
             ],
             RegistrationState.ASKED_NAME: [
@@ -82,15 +91,11 @@ def main():
                     handle_selected_program,
                     pattern='^back_to_program$'
                 ),
+            ],
+            QuestionsState.SAVE_QUESTION: [
                 CallbackQueryHandler(
                     handle_ask_question,
-                    pattern='ask_question'
-                ),
-            ],
-            ProgramState.SAVE_QUESTION: [
-                CallbackQueryHandler(
-                    handle_speaker,
-                    pattern='^back_to_speaker$'
+                    pattern='^back_to_menu$'
                 ),
                 MessageHandler(
                     Filters.text,

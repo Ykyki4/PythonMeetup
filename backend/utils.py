@@ -75,6 +75,17 @@ def get_event(title):
         return None
 
 
+def get_current_event():
+    try:
+        meetup = Meetup.objects.get(date=localdate())
+        current_event = meetup.events.filter(time__lte=localtime()).last()
+        if not current_event:
+            return None
+        return serialize_event(current_event)
+    except Meetup.DoesNotExist:
+        return None
+
+
 def create_question(telegram_id, event_title, content):
     guest = User.objects.get(telegram_id=telegram_id)
     event = Event.objects.get(title=event_title)
