@@ -1,13 +1,10 @@
 import textwrap
 from enum import Enum
 
-from environs import Env
 from more_itertools import chunked
-from telegram import InlineKeyboardButton, InlineKeyboardMarkup, KeyboardButton, ReplyKeyboardMarkup
-from telegram.ext import Updater, CommandHandler, ConversationHandler, CallbackQueryHandler, MessageHandler, Filters
+from telegram import InlineKeyboardButton, InlineKeyboardMarkup
 
-from .keyboards import get_keyboard, main_menu_buttons, get_questions_keyboard
-from .program import ProgramState
+from .keyboards import get_questions_keyboard
 from .main_menu import send_main_menu
 from backend.utils import get_current_event, create_question, get_questions
 

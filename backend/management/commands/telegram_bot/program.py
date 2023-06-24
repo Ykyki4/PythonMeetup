@@ -4,9 +4,9 @@ from enum import Enum
 
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup, ReplyKeyboardRemove
 
-from .keyboards import get_keyboard, main_menu_buttons
-from backend.utils import get_today_meetup, get_event, create_question, get_user
-from .main_menu import MainMenuState, send_main_menu
+from .keyboards import get_keyboard
+from backend.utils import get_today_meetup, get_event
+from .main_menu import send_main_menu
 
 
 class ProgramState(Enum):
