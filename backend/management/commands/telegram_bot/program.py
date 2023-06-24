@@ -6,6 +6,7 @@ from telegram import InlineKeyboardButton, InlineKeyboardMarkup, ReplyKeyboardRe
 
 from .keyboards import get_keyboard, main_menu_buttons
 from backend.utils import get_today_meetup, get_event, create_question, get_user
+from .main_menu import MainMenuState, send_main_menu
 
 
 class ProgramState(Enum):
@@ -14,8 +15,7 @@ class ProgramState(Enum):
     SELECTED_DATA = 3
     HANDLED_DATE = 4
     HANDLED_SPEAKER = 5
-    ISSUED_MAIN_MENU = 6
-    SAVE_QUESTION = 8
+    SAVE_QUESTION = 6
 
 
 def handle_program(update, context):
@@ -25,11 +25,7 @@ def handle_program(update, context):
         update.message.reply_text(
             text='Программы на сегодня нет( Попробуйте позже',
         )
-        update.message.reply_text(
-            text='Выберите один из следующих пунктов: ',
-            reply_markup=get_keyboard(list(main_menu_buttons.values())),
-        )
-        return ProgramState.ISSUED_MAIN_MENU
+        return send_main_menu(update, context)
 
     events_titles = [event['title'] for event in meetup['events']]
     events_titles.append('Назад')
@@ -92,11 +88,7 @@ def handle_selected_program(update, context):
 
             return ProgramState.SELECTED_DATA
         elif text == 'Назад':
-            update.message.reply_text(
-                text='Выберите один из следующих пунктов: ',
-                reply_markup=get_keyboard(list(main_menu_buttons.values())),
-            )
-            return ProgramState.ISSUED_MAIN_MENU
+            return send_main_menu(update, context)
 
         else:
             return ProgramState.SELECTED_PROGRAM

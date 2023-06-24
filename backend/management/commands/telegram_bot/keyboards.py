@@ -39,7 +39,7 @@ def get_questions_keyboard(questions, chunk):
         if chunk + 1 != len(questions) else None
     keyboard = [
         arrows_keyboard,
-        [InlineKeyboardButton('В главное меню', callback_data='back')],
+        [InlineKeyboardButton('В главное меню', callback_data='back_to_menu')],
     ]
 
     return InlineKeyboardMarkup(keyboard)

@@ -4,13 +4,13 @@ from telegram import ReplyKeyboardRemove, InlineKeyboardButton, InlineKeyboardMa
 
 
 from .keyboards import main_menu_buttons, get_keyboard
+from .main_menu import MainMenuState, send_main_menu
 from backend.utils import create_user, get_user
 
 
 class RegistrationState(Enum):
-    PROCESSED_REGISTRATION = 1
-    ASKED_NEW_NAME = 2
-    ASKED_NAME = 3
+    ASKED_NEW_NAME = 1
+    ASKED_NAME = 2
 
 
 def start(update, context):
@@ -26,11 +26,7 @@ def start(update, context):
     user = get_user(user_id)
 
     if user:
-        update.message.reply_text(
-            text='Авторизация пройдена! \nВыберите один из следующих пунктов: ',
-            reply_markup=get_keyboard(list(main_menu_buttons.values())),
-        )
-        return RegistrationState.PROCESSED_REGISTRATION
+        return send_main_menu(update, context)
     else:
         keyboard = [
             [
@@ -70,7 +66,7 @@ def handle_name(update, context):
         reply_markup = get_keyboard(list(main_menu_buttons.values()))
         context.bot.sendMessage(update.effective_chat.id, text=message, reply_markup=reply_markup)
         create_user(user_id, user_name)
-        return RegistrationState.PROCESSED_REGISTRATION
+        return MainMenuState.HandleMainMenu
 
     else:
         query.edit_message_text(text='Введите, пожалуйста, ваше имя и фамилию')
@@ -80,10 +76,5 @@ def handle_name(update, context):
 def handle_new_name(update, context):
     user_name = update.message.text
     user_id = update.message.from_user.id
-    reply_markup = get_keyboard(list(main_menu_buttons.values()))
-    update.message.reply_text(
-        text='Выберите один из следующих пунктов: ',
-        reply_markup=reply_markup
-    )
     create_user(user_id, user_name)
-    return RegistrationState.PROCESSED_REGISTRATION
+    return send_main_menu(update, context)

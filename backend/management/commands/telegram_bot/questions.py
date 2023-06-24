@@ -7,7 +7,8 @@ from telegram import InlineKeyboardButton, InlineKeyboardMarkup, KeyboardButton,
 from telegram.ext import Updater, CommandHandler, ConversationHandler, CallbackQueryHandler, MessageHandler, Filters
 
 from .keyboards import get_keyboard, main_menu_buttons, get_questions_keyboard
-from .program import handle_program, ProgramState
+from .program import ProgramState
+from .main_menu import send_main_menu
 from backend.utils import get_current_event, create_question, get_questions
 
 
@@ -22,13 +23,9 @@ def handle_ask_question(update, context):
         update.message.reply_text(
             text='Программы на сегодня нет, либо событие ещё не началось( Попробуйте позже'
         )
-        update.message.reply_text(
-            text='Выберите один из следующих пунктов: ',
-            reply_markup=get_keyboard(list(main_menu_buttons.values())),
-        )
-        return ProgramState.ISSUED_MAIN_MENU
+        return send_main_menu(update, context)
     context.user_data['current_event'] = current_event
-    reply_markup = ReplyKeyboardMarkup([[KeyboardButton('Назад')]])
+    reply_markup = InlineKeyboardMarkup([[InlineKeyboardButton('Назад', callback_data='back_to_menu')]])
     update.message.reply_text(
         text=f'''Задать вопрос к событию {current_event['title']}. Введите свой вопрос.''',
         reply_markup=reply_markup
@@ -39,13 +36,6 @@ def handle_ask_question(update, context):
 
 def handle_save_question(update, context):
     content = update.message.text
-    if content == 'Назад':
-        update.message.reply_text(
-            text='Выберите один из следующих пунктов: ',
-            reply_markup=get_keyboard(list(main_menu_buttons.values())),
-        )
-        return ProgramState.ISSUED_MAIN_MENU
-
     user_id = update.message.from_user.id
     event = context.user_data['current_event']
     question = create_question(user_id, event['title'], content)
@@ -54,12 +44,7 @@ def handle_save_question(update, context):
         'Ваш вопрос был отправлен. Спасибо за участие!'
     )
 
-    update.message.reply_text(
-        text='Выберите один из следующих пунктов: ',
-        reply_markup=get_keyboard(list(main_menu_buttons.values())),
-    )
-
-    return ProgramState.ISSUED_MAIN_MENU
+    return send_main_menu(update, context)
 
 
 def get_asked_questions_text(chunked_questions, chunk):
@@ -97,17 +82,7 @@ def start_asked_questions(update, context):
 
 def handle_asked_questions(update, context):
     query = update.callback_query
-    if query.data == 'back':
-        message_id = query.message.message_id
-        context.bot.delete_message(update.effective_chat.id, message_id)
-
-        context.bot.send_message(
-            update.effective_chat.id,
-            text='Выберите один из следующих пунктов: ',
-            reply_markup=get_keyboard(list(main_menu_buttons.values())),
-        )
-        return ProgramState.ISSUED_MAIN_MENU
-    elif query.data == "⬅️":
+    if query.data == "⬅️":
         context.user_data['chunk'] -= 1
     elif query.data == "➡️":
         context.user_data['chunk'] += 1

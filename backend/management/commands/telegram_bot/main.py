@@ -1,8 +1,7 @@
-from enum import Enum
-
 from environs import Env
 from telegram.ext import Updater, CommandHandler, MessageHandler, Filters, ConversationHandler, CallbackQueryHandler
 
+from .main_menu import MainMenuState, send_main_menu
 from .visit_card import start_exchange, ExchangeState, handle_exchange_response, handle_details
 from .keyboards import main_menu_buttons
 from .registration import start, handle_name, handle_new_name, RegistrationState
@@ -22,25 +21,7 @@ def main():
     conversation_handler = ConversationHandler(
         entry_points=[CommandHandler('start', start)],
         states={
-            RegistrationState.PROCESSED_REGISTRATION: [
-                MessageHandler(
-                    Filters.regex(''.join(main_menu_buttons['program_button'])),
-                    handle_program
-                ),
-                MessageHandler(
-                    Filters.regex(''.join(main_menu_buttons['cards_exchange_button'])),
-                    start_exchange
-                ),
-                MessageHandler(
-                    Filters.regex(''.join(main_menu_buttons['ask_question_button'])),
-                    handle_ask_question,
-                ),
-                MessageHandler(
-                    Filters.regex(''.join(main_menu_buttons['asked_questions_button'])),
-                    start_asked_questions,
-                ),
-            ],
-            ProgramState.ISSUED_MAIN_MENU: [
+            MainMenuState.HandleMainMenu: [
                 MessageHandler(
                     Filters.regex(''.join(main_menu_buttons['program_button'])),
                     handle_program
@@ -103,7 +84,7 @@ def main():
             ],
             QuestionsState.SAVE_QUESTION: [
                 CallbackQueryHandler(
-                    handle_ask_question,
+                    send_main_menu,
                     pattern='^back_to_menu$'
                 ),
                 MessageHandler(
@@ -112,6 +93,10 @@ def main():
                 ),
             ],
             QuestionsState.ASKED_QUESTIONS: [
+                CallbackQueryHandler(
+                    send_main_menu,
+                    pattern='^back_to_menu$'
+                ),
                 CallbackQueryHandler(
                     handle_asked_questions
                 )
