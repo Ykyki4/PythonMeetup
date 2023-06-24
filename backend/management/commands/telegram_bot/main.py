@@ -1,6 +1,9 @@
 from environs import Env
-from telegram.ext import Updater, CommandHandler, MessageHandler, Filters, ConversationHandler, CallbackQueryHandler
+from telegram.ext import Updater, CommandHandler, MessageHandler, Filters, ConversationHandler, CallbackQueryHandler, \
+    PreCheckoutQueryHandler
 
+from backend.management.commands.telegram_bot.donation import handle_donation, DonationState, handle_pay_process, \
+    handle_pre_checkout_callback, handle_successful_payment_callback
 from .main_menu import MainMenuState, send_main_menu
 from .visit_card import start_exchange, ExchangeState, handle_exchange_response, handle_details
 from .keyboards import main_menu_buttons
@@ -19,6 +22,7 @@ def main():
     dispatcher = updater.dispatcher
 
     conversation_handler = ConversationHandler(
+        per_chat=False,
         entry_points=[CommandHandler('start', start)],
         states={
             MainMenuState.HANDLE_MAIN_MENU: [
@@ -37,6 +41,10 @@ def main():
                 MessageHandler(
                     Filters.regex(''.join(main_menu_buttons['asked_questions_button'])),
                     start_asked_questions,
+                ),
+                MessageHandler(
+                    Filters.regex(''.join(main_menu_buttons['donation_button'])),
+                    handle_donation,
                 ),
             ],
             RegistrationState.ASKED_NAME: [
@@ -110,6 +118,29 @@ def main():
                 MessageHandler(
                     Filters.text,
                     handle_details,
+                )
+            ],
+            DonationState.HANDLED_SUM: [
+                MessageHandler(
+                    Filters.text,
+                    handle_pay_process,
+                )
+            ],
+            DonationState.PROCESSED_PAYMENT: [
+                PreCheckoutQueryHandler(
+                    handle_pre_checkout_callback,
+                )
+            ],
+            DonationState.HANDLED_CUSTOM_SUM: [
+                MessageHandler(
+                    Filters.text,
+                    handle_pay_process,
+                )
+            ],
+            DonationState.SUCCEED_PAYMENT: [
+                MessageHandler(
+                    Filters.all,
+                    handle_successful_payment_callback,
                 )
             ]
         },
