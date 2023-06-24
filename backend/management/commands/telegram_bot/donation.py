@@ -3,7 +3,7 @@ from enum import Enum
 import telegram
 from environs import Env
 
-from telegram import LabeledPrice, ReplyKeyboardRemove
+from telegram import LabeledPrice
 
 from .keyboards import donation_buttons, get_keyboard
 from .main_menu import send_main_menu
@@ -17,12 +17,11 @@ class DonationState(Enum):
 
 
 def handle_donation(update, context):
-    query = update.callback_query
     buttons = list(donation_buttons.values())
     buttons.append('Назад')
     message = update.message.reply_text(
         text='Вы можете выбрать сумму поддержки либо написать свою.\n'
-             'Сумма должна быть от 100 до 1000 рублей.',
+             'Сумма должна быть от 10 рублей.',
         reply_markup=get_keyboard(buttons),
     )
     context.user_data['payment_title_message_id'] = message.message_id
@@ -55,7 +54,7 @@ def handle_pay_process(update, context):
         except ValueError:
             context.bot.send_message(
                 update.effective_chat.id,
-                text='Пожалуйста, введите сумму от 100 до 1000 рублей ещё раз, либо используйте кнопки',
+                text='Пожалуйста, введите сумму от 10 рублей ещё раз, либо используйте кнопки',
                 reply_markup=get_keyboard(list(donation_buttons.values())),
             )
             return DonationState.HANDLED_CUSTOM_SUM
@@ -63,7 +62,7 @@ def handle_pay_process(update, context):
             if exception.message == 'Currency_total_amount_invalid':
                 context.bot.send_message(
                     update.effective_chat.id,
-                    text='Введенная сумма должна быть от 10  до 1000 рублей.\n'
+                    text='Введенная сумма должна быть не меньше 10 рублей.\n'
                          'Пожалуйста, повторите ввод или используйте кнопки',
                     reply_markup=get_keyboard(list(donation_buttons.values())),
                 )
@@ -83,6 +82,5 @@ def handle_pre_checkout_callback(update, context):
 
 
 def handle_successful_payment_callback(update, context):
-    context.bot.delete_message(update.effective_chat.id, message_id)
     update.message.reply_text('Спасибо за поддержку!')
     return send_main_menu(update, context)
