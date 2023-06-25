@@ -10,8 +10,8 @@ from .keyboards import main_menu_buttons
 from .registration import start, handle_name, handle_new_name, RegistrationState
 from .program import ProgramState, handle_program, handle_selected_program, handle_date, \
     handle_speaker
-from .questions import handle_ask_question, handle_save_question, QuestionsState, start_asked_questions, \
-    handle_asked_questions
+from .questions import handle_ask_question, handle_save_question, QuestionsState, send_questions_i_asked, \
+    send_questions_asked_to_me, handle_asked_questions, start_questions
 
 
 def main():
@@ -40,7 +40,7 @@ def main():
                 ),
                 MessageHandler(
                     Filters.regex(''.join(main_menu_buttons['asked_questions_button'])),
-                    start_asked_questions,
+                    start_questions,
                 ),
                 MessageHandler(
                     Filters.regex(''.join(main_menu_buttons['donation_button'])),
@@ -98,6 +98,20 @@ def main():
                 MessageHandler(
                     Filters.text,
                     handle_save_question,
+                ),
+            ],
+            QuestionsState.CHOOSE_ASKED_QUESTIONS: [
+                CallbackQueryHandler(
+                    send_main_menu,
+                    pattern='^back_to_menu$'
+                ),
+                CallbackQueryHandler(
+                    send_questions_i_asked,
+                    pattern='i_asked_questions'
+                ),
+                CallbackQueryHandler(
+                    send_questions_asked_to_me,
+                    pattern='asked_to_me_questions'
                 ),
             ],
             QuestionsState.ASKED_QUESTIONS: [

@@ -37,14 +37,12 @@ def get_keyboard(buttons, one_time_keyboard=False):
 
 
 def get_questions_keyboard(questions, chunk):
-    chunk_size = 5
-    chunked_requests = list(chunked(questions, chunk_size))
-
     arrows_keyboard = []
-    arrows_keyboard.append(InlineKeyboardButton('⬅️', callback_data='⬅️')) \
-        if chunk != 0 else None
-    arrows_keyboard.append(InlineKeyboardButton('➡️', callback_data='➡️')) \
-        if chunk + 1 != len(questions) else None
+    if questions:
+        arrows_keyboard.append(InlineKeyboardButton('⬅️', callback_data='⬅️')) \
+            if chunk != 0 else None
+        arrows_keyboard.append(InlineKeyboardButton('➡️', callback_data='➡️')) \
+            if chunk + 1 != len(questions) else None
     keyboard = [
         arrows_keyboard,
         [InlineKeyboardButton('В главное меню', callback_data='back_to_menu')],

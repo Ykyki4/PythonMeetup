@@ -6,12 +6,13 @@ from telegram import InlineKeyboardButton, InlineKeyboardMarkup
 
 from .keyboards import get_questions_keyboard
 from .main_menu import send_main_menu
-from backend.utils import get_current_event, create_question, get_questions
+from backend.utils import get_current_event, create_question, get_to_speaker_questions, get_user, get_from_guest_questions
 
 
 class QuestionsState(Enum):
     SAVE_QUESTION = 1
-    ASKED_QUESTIONS = 2
+    CHOOSE_ASKED_QUESTIONS = 2
+    ASKED_QUESTIONS = 3
 
 
 def handle_ask_question(update, context):
@@ -51,15 +52,43 @@ def get_asked_questions_text(chunked_questions, chunk):
         text = ''
         for question in chunked_questions[chunk]:
             text += textwrap.dedent(f'''
-                Гость: {question['guest']['name']}
                 Вопрос: {question['content']}\n
             ''')
     return text
 
 
-def start_asked_questions(update, context):
+def start_questions(update, context):
     user_id = update.message.from_user.id
-    questions = get_questions(user_id)
+    user = get_user(user_id)
+    if not user['is_speaker']:
+        questions = get_from_guest_questions(user_id)
+        return send_questions(update, context, questions)
+
+    keyboard = [[InlineKeyboardButton('Заданные мной вопросы', callback_data='i_asked_questions'),
+                 InlineKeyboardButton('Заданные мне вопросы', callback_data='asked_to_me_questions')],
+                [InlineKeyboardButton('В главное меню', callback_data='back_to_menu')]]
+
+    update.message.reply_text(
+        text='Выберите какие вопросы вы хотите просмотреть.',
+        reply_markup=InlineKeyboardMarkup(keyboard)
+    )
+
+    return QuestionsState.CHOOSE_ASKED_QUESTIONS
+
+
+def send_questions_i_asked(update, context):
+    user_id = update.effective_user.id
+    questions = get_from_guest_questions(user_id)
+    return send_questions(update, context, questions)
+
+
+def send_questions_asked_to_me(update, context):
+    user_id = update.effective_user.id
+    questions = get_to_speaker_questions(user_id)
+    return send_questions(update, context, questions)
+
+
+def send_questions(update, context, questions):
     chunk_size = 5
     chunk = 0
     chunked_questions = list(chunked(questions, chunk_size))
@@ -69,7 +98,12 @@ def start_asked_questions(update, context):
 
     context.user_data['chunk'] = chunk
     context.user_data['chunked_questions'] = chunked_questions
-    update.message.reply_text(
+    query = update.callback_query
+    if query:
+        message_id = query.message.message_id
+        context.bot.delete_message(update.effective_chat.id, message_id)
+    context.bot.send_message(
+        update.effective_chat.id,
         text=text,
         reply_markup=reply_markup
     )

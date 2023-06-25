@@ -93,13 +93,22 @@ def create_question(telegram_id, event_title, content):
     return serialize_question(question)
 
 
-def get_questions(telegram_id):
+def get_to_speaker_questions(telegram_id):
     try:
         speaker = User.objects.get(telegram_id=telegram_id)
     except User.DoesNotExist:
         return None
     events = speaker.events.all()
     questions = [serialize_question(question) for event in events for question in event.questions.all()]
+    return questions
+
+
+def get_from_guest_questions(telegram_id):
+    try:
+        guest = User.objects.get(telegram_id=telegram_id)
+    except User.DoesNotExist:
+        return None
+    questions = [serialize_question(question) for question in guest.questions.all()]
     return questions
 
 
