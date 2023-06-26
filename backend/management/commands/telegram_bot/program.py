@@ -37,23 +37,23 @@ def handle_program(update, context):
     if query:
         message_id = query.message.message_id
         context.bot.delete_message(update.effective_chat.id, message_id)
-        context.bot.send_message(
+        message = context.bot.send_message(
             update.effective_chat.id,
             text=text,
             reply_markup=get_keyboard(events_titles)
         )
     else:
-        update.message.reply_text(
+        message = update.message.reply_text(
             text=text,
             reply_markup=get_keyboard(events_titles),
         )
-
+    context.user_data['program_title_message_id'] = message.message_id
     return ProgramState.SELECTED_PROGRAM
 
 
 def handle_selected_program(update, context):
     query = update.callback_query
-    titled_text = 'Загружаю мероприятие'
+    program_title_message_id = context.user_data['program_title_message_id']
     keyboard = [
         [
             InlineKeyboardButton('Время', callback_data='time'),
@@ -76,11 +76,7 @@ def handle_selected_program(update, context):
 
         if event:
             context.user_data['event'] = event
-            update.message.reply_text(
-                text=titled_text,
-                reply_markup=ReplyKeyboardRemove(),
-            )
-            time.sleep(2)
+            context.bot.delete_message(update.effective_chat.id, program_title_message_id)
             update.message.reply_text(
                 text=event['description'],
                 reply_markup=reply_markup,
