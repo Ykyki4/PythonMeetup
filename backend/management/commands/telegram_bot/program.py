@@ -43,11 +43,11 @@ def handle_program(update, context):
             reply_markup=get_keyboard(events_titles)
         )
     else:
-        message = update.message.reply_text(
+        program_title_message = update.message.reply_text(
             text=text,
             reply_markup=get_keyboard(events_titles),
         )
-    context.user_data['program_title_message_id'] = message.message_id
+    context.user_data['program_title_message_id'] = program_title_message.message_id
     return ProgramState.SELECTED_PROGRAM
 
 
