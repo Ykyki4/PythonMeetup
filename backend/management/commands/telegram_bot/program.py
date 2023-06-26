@@ -40,12 +40,12 @@ def handle_program(update, context):
         message = context.bot.send_message(
             update.effective_chat.id,
             text=text,
-            reply_markup=get_keyboard(events_titles)
+            reply_markup=get_keyboard(events_titles, 2)
         )
     else:
         program_title_message = update.message.reply_text(
             text=text,
-            reply_markup=get_keyboard(events_titles),
+            reply_markup=get_keyboard(events_titles, 2),
         )
     context.user_data['program_title_message_id'] = program_title_message.message_id
     return ProgramState.SELECTED_PROGRAM

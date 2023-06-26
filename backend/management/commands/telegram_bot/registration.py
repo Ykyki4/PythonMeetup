@@ -63,7 +63,7 @@ def handle_name(update, context):
 
         context.bot.delete_message(update.effective_chat.id, message_id)
         message = 'Выберите один из следующих пунктов: '
-        reply_markup = get_keyboard(list(main_menu_buttons.values()))
+        reply_markup = get_keyboard(list(main_menu_buttons.values()), 3)
         context.bot.sendMessage(update.effective_chat.id, text=message, reply_markup=reply_markup)
         create_user(user_id, user_name)
         return MainMenuState.HANDLE_MAIN_MENU

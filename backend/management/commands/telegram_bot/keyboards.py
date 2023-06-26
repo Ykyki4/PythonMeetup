@@ -18,20 +18,15 @@ donation_buttons = {
 }
 
 
-def set_keyboards_buttons(buttons):
-    keyboard = []
-
-    for button in buttons:
-        keyboard.append(KeyboardButton(button))
-
-    return keyboard
+def get_lists_of_buttons(buttons, rows_quantity):
+    for button_number in range(0, len(buttons), rows_quantity):
+        yield buttons[button_number: button_number + rows_quantity]
 
 
-def get_keyboard(buttons, one_time_keyboard=False):
+def get_keyboard(buttons, rows_quantity):
     reply_markup = ReplyKeyboardMarkup(
-        keyboard=[set_keyboards_buttons(buttons)],
-        resize_keyboard=True,
-        one_time_keyboard=one_time_keyboard,
+        keyboard=list(get_lists_of_buttons(buttons, rows_quantity)),
+        resize_keyboard=True
     )
     return reply_markup
 
