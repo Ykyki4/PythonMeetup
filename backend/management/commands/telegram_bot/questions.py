@@ -16,6 +16,8 @@ class QuestionsState(Enum):
 
 
 def handle_ask_question(update, context):
+    main_menu_message_id = context.user_data['main_menu_message_id']
+    context.bot.delete_message(update.effective_chat.id, main_menu_message_id)
     current_event = get_current_event()
     if not current_event:
         update.message.reply_text(
@@ -58,6 +60,8 @@ def get_asked_questions_text(chunked_questions, chunk):
 
 
 def start_questions(update, context):
+    main_menu_message_id = context.user_data['main_menu_message_id']
+    context.bot.delete_message(update.effective_chat.id, main_menu_message_id)
     user_id = update.message.from_user.id
     user = get_user(user_id)
     if not user['is_speaker']:
@@ -72,7 +76,6 @@ def start_questions(update, context):
         text='Выберите какие вопросы вы хотите просмотреть.',
         reply_markup=InlineKeyboardMarkup(keyboard)
     )
-
     return QuestionsState.CHOOSE_ASKED_QUESTIONS
 
 
