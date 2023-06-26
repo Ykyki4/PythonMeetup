@@ -3,3 +3,4 @@ environs==9.5.0
 python-telegram-bot==13.13
 dj_database_url==2.0.0
 more_itertools==9.1.0
+psycopg2-binary==2.9.6
