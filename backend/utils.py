@@ -112,6 +112,15 @@ def get_from_guest_questions(telegram_id):
     return questions
 
 
+def get_visit_card(telegram_id):
+    try:
+        user = User.objects.get(telegram_id=telegram_id)
+        visit_card = VisitCard.objects.get(owner=user)
+        return serialize_visit_card(visit_card)
+    except (User.DoesNotExist, VisitCard.DoesNotExist):
+        return None
+
+
 def create_visit_card(telegram_id, first_name, last_name, job_title, phone):
     try:
         user = User.objects.get(telegram_id=telegram_id)

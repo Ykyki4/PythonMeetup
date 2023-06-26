@@ -1,10 +1,10 @@
+import textwrap
 from enum import Enum
 
-from environs import Env
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import Updater, CommandHandler, ConversationHandler, CallbackQueryHandler, MessageHandler, Filters
 
-from backend.models import VisitCard, User
+from backend.utils import get_visit_card, get_visit_cards, create_visit_card
 
 
 class ExchangeState(Enum):
@@ -13,11 +13,9 @@ class ExchangeState(Enum):
 
 
 def start_exchange(update, context):
-    user = User.objects.get(telegram_id=str(update.effective_user.id))
-    context.user_data['user_profile'] = user
-    existing_card = VisitCard.objects.filter(owner=user).first()
+    user_id = update.message.from_user.id
+    existing_card = get_visit_card(user_id)
     if existing_card:
-        query = update.callback_query
         keyboard = [
             [
                 InlineKeyboardButton('Обновить', callback_data='update'),
@@ -32,7 +30,6 @@ def start_exchange(update, context):
         )
         return ExchangeState.VISIT_CARD_AGREE
     else:
-        context.user_data['user_profile'] = user
         keyboard = [
             [
                 InlineKeyboardButton('Да', callback_data='yes'),
@@ -49,6 +46,7 @@ def start_exchange(update, context):
 
 
 def handle_exchange_response(update, context):
+    user_id = update.effective_user.id
     query = update.callback_query
     if query.data == 'yes' or query.data == 'update':
         context.bot.edit_message_text(
@@ -61,10 +59,13 @@ def handle_exchange_response(update, context):
         )
         return ExchangeState.VISIT_CARD_DETAILS
     elif query.data == 'use_current':
-        all_cards = VisitCard.objects.all()
+        all_cards = get_visit_cards(user_id)
         all_cards_text = ''
         for card in all_cards:
-            all_cards_text += f'Имя: {card.first_name} {card.last_name}\nДолжность: {card.job_title}\nТелефон: {card.phone}\n\n'
+            all_cards_text += textwrap.dedent(f'''
+            Имя: {card['first_name']} {card['last_name']}
+            Должность: {card['job_title']}
+            Телефон: {card['phone']}\n''')
         context.bot.edit_message_text(
             chat_id=query.message.chat_id,
             message_id=query.message.message_id,
@@ -82,61 +83,63 @@ def handle_exchange_response(update, context):
 
 def handle_details(update, context):
     details = update.message.text.split('\n')
+    user_id = update.message.from_user.id
 
     if len(details) < 3:
         update.message.reply_text('Введите все данные в нужном формате, пожалуйста.')
         return ExchangeState.VISIT_CARD_DETAILS
 
-    card = VisitCard(owner=context.user_data['user_profile'],
-                     first_name=details[0].split()[0],
-                     last_name=details[0].split()[1],
-                     job_title=details[1],
-                     phone=details[2])
-    card.save()
+    card = create_visit_card(telegram_id=user_id,
+                             first_name=details[0].split()[0],
+                             last_name=details[0].split()[1],
+                             job_title=details[1],
+                             phone=details[2])
 
-    all_cards = VisitCard.objects.all()
+    all_cards = get_visit_cards(user_id)
 
     all_cards_text = ''
     for card in all_cards:
-        all_cards_text += f'Имя: {card.first_name} {card.last_name}\nДолжность: {card.job_title}\nТелефон: {card.phone}\n\n'
+        all_cards_text += textwrap.dedent(f'''
+        Имя: {card['first_name']} {card['last_name']}
+        Должность: {card['job_title']}
+        Телефон: {card['phone']}\n''')
 
     update.message.reply_text('Ваша визитка сохранена. Вот все визитки:\n\n' + all_cards_text)
 
     return ConversationHandler.END
 
-
-def main():
-    env = Env()
-    env.read_env()
-
-    bot_token = env('TELEGRAM_TOKEN')
-    updater = Updater(token=bot_token, use_context=True)
-    dispatcher = updater.dispatcher
-
-    conversation_handler = ConversationHandler(
-        entry_points=[CommandHandler('start', start_exchange)],
-        states={
-            VISIT_CARD_AGREE: [
-                CallbackQueryHandler(
-                    handle_exchange_response
-                ),
-            ],
-            VISIT_CARD_DETAILS: [
-                MessageHandler(
-                    Filters.text,
-                    handle_details,
-                )
-            ],
-        },
-        fallbacks=[
-            CommandHandler('start', start_exchange)
-        ]
-    )
-
-    dispatcher.add_handler(conversation_handler)
-    updater.start_polling()
-    updater.idle()
-
-
-if __name__ == '__main__':
-    main()
+# def main():
+#     env = Env()
+#     env.read_env()
+#
+#     bot_token = env('TELEGRAM_TOKEN')
+#     updater = Updater(token=bot_token, use_context=True)
+#     dispatcher = updater.dispatcher
+#
+#     conversation_handler = ConversationHandler(
+#         entry_points=[CommandHandler('start', start_exchange)],
+#         states={
+#             VISIT_CARD_AGREE: [
+#                 CallbackQueryHandler(
+#                     handle_exchange_response
+#                 ),
+#             ],
+#             VISIT_CARD_DETAILS: [
+#                 MessageHandler(
+#                     Filters.text,
+#                     handle_details,
+#                 )
+#             ],
+#         },
+#         fallbacks=[
+#             CommandHandler('start', start_exchange)
+#         ]
+#     )
+#
+#     dispatcher.add_handler(conversation_handler)
+#     updater.start_polling()
+#     updater.idle()
+#
+#
+# if __name__ == '__main__':
+#     main()
