@@ -5,7 +5,7 @@ from telegram.ext import Updater, CommandHandler, MessageHandler, Filters, Conve
 from backend.management.commands.telegram_bot.donation import handle_donation, DonationState, handle_pay_process, \
     handle_pre_checkout_callback, handle_successful_payment_callback
 from .main_menu import MainMenuState, send_main_menu
-from .visit_card import start_exchange, ExchangeState, handle_exchange_response, handle_details
+from .visit_card import start_exchange, ExchangeState, handle_exchange_response, handle_details, handle_visit_cards
 from .keyboards import main_menu_buttons
 from .registration import start, handle_name, handle_new_name, RegistrationState
 from .program import ProgramState, handle_program, handle_selected_program, handle_date, \
@@ -125,13 +125,30 @@ def main():
             ],
             ExchangeState.VISIT_CARD_AGREE: [
                 CallbackQueryHandler(
+                    send_main_menu,
+                    pattern='^back_to_menu$'
+                ),
+                CallbackQueryHandler(
                     handle_exchange_response
                 ),
             ],
             ExchangeState.VISIT_CARD_DETAILS: [
+                CallbackQueryHandler(
+                    send_main_menu,
+                    pattern='^back_to_menu$'
+                ),
                 MessageHandler(
                     Filters.text,
                     handle_details,
+                ),
+            ],
+            ExchangeState.HANDLE_VISIT_CARDS: [
+                CallbackQueryHandler(
+                    send_main_menu,
+                    pattern='^back_to_menu$'
+                ),
+                CallbackQueryHandler(
+                    handle_visit_cards
                 )
             ],
             DonationState.HANDLED_SUM: [

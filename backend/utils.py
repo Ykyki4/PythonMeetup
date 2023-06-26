@@ -124,8 +124,11 @@ def get_visit_card(telegram_id):
 def create_visit_card(telegram_id, first_name, last_name, job_title, phone):
     try:
         user = User.objects.get(telegram_id=telegram_id)
+        VisitCard.objects.get(owner=user).delete()
     except User.DoesNotExist:
         return None
+    except VisitCard.DoesNotExist:
+        pass
 
     visit_card = VisitCard.objects.create(
         owner=user,

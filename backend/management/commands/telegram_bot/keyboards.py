@@ -31,13 +31,13 @@ def get_keyboard(buttons, rows_quantity):
     return reply_markup
 
 
-def get_questions_keyboard(questions, chunk):
+def get_arrows_keyboard(chunks, chunk):
     arrows_keyboard = []
-    if questions:
+    if chunks:
         arrows_keyboard.append(InlineKeyboardButton('⬅️', callback_data='⬅️')) \
             if chunk != 0 else None
         arrows_keyboard.append(InlineKeyboardButton('➡️', callback_data='➡️')) \
-            if chunk + 1 != len(questions) else None
+            if chunk + 1 != len(chunks) else None
     keyboard = [
         arrows_keyboard,
         [InlineKeyboardButton('В главное меню', callback_data='back_to_menu')],

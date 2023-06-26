@@ -4,7 +4,7 @@ from enum import Enum
 from more_itertools import chunked
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup
 
-from .keyboards import get_questions_keyboard
+from .keyboards import get_arrows_keyboard
 from .main_menu import send_main_menu
 from backend.utils import get_current_event, create_question, get_to_speaker_questions, get_user, get_from_guest_questions
 
@@ -54,7 +54,7 @@ def get_asked_questions_text(chunked_questions, chunk):
         text = ''
         for question in chunked_questions[chunk]:
             text += textwrap.dedent(f'''
-                Вопрос: {question['content']}\n
+                Вопрос: {question['content']}
             ''')
     return text
 
@@ -96,7 +96,7 @@ def send_questions(update, context, questions):
     chunk = 0
     chunked_questions = list(chunked(questions, chunk_size))
 
-    reply_markup = get_questions_keyboard(chunked_questions, chunk)
+    reply_markup = get_arrows_keyboard(chunked_questions, chunk)
     text = get_asked_questions_text(chunked_questions, chunk)
 
     context.user_data['chunk'] = chunk
@@ -124,7 +124,7 @@ def handle_asked_questions(update, context):
     chunked_questions = context.user_data['chunked_questions']
     chunk = context.user_data['chunk']
 
-    reply_markup = get_questions_keyboard(chunked_questions, chunk)
+    reply_markup = get_arrows_keyboard(chunked_questions, chunk)
     text = get_asked_questions_text(chunked_questions, chunk)
 
     query.edit_message_text(

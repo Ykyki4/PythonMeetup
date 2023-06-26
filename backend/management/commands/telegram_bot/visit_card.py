@@ -1,34 +1,44 @@
 import textwrap
 from enum import Enum
 
+from more_itertools import chunked
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup
-from telegram.ext import Updater, CommandHandler, ConversationHandler, CallbackQueryHandler, MessageHandler, Filters
 
+from .keyboards import get_arrows_keyboard
+from .main_menu import send_main_menu
 from backend.utils import get_visit_card, get_visit_cards, create_visit_card
 
 
 class ExchangeState(Enum):
     VISIT_CARD_AGREE = 1
     VISIT_CARD_DETAILS = 2
+    HANDLE_VISIT_CARDS = 3
 
 
 def start_exchange(update, context):
     user_id = update.message.from_user.id
-    existing_card = get_visit_card(user_id)
-    if existing_card:
+    card = get_visit_card(user_id)
+    if card:
         keyboard = [
             [
                 InlineKeyboardButton('Обновить', callback_data='update'),
                 InlineKeyboardButton('Использовать текущую', callback_data='use_current'),
-            ]
+            ],
+            [InlineKeyboardButton('В главное меню', callback_data='back_to_menu')]
         ]
         reply_markup = InlineKeyboardMarkup(keyboard)
+        text = textwrap.dedent(f'''
+            Ваша визитка:
+            Имя: {card['first_name']} {card['last_name']}
+            Должность: {card['job_title']}
+            Телефон: {card['phone']}\n
+            Хотите обновить ее или использовать текущую?
+            ''')
         context.bot.send_message(
             chat_id=update.effective_chat.id,
-            text='У вас уже есть визитка. Хотите обновить ее или использовать текущую?',
+            text=text,
             reply_markup=reply_markup
         )
-        return ExchangeState.VISIT_CARD_AGREE
     else:
         keyboard = [
             [
@@ -49,36 +59,33 @@ def handle_exchange_response(update, context):
     user_id = update.effective_user.id
     query = update.callback_query
     if query.data == 'yes' or query.data == 'update':
+        keyboard = [[InlineKeyboardButton('В главное меню', callback_data='back_to_menu')]]
         context.bot.edit_message_text(
             chat_id=query.message.chat_id,
             message_id=query.message.message_id,
             text='Пожалуйста, введите свои данные в следующем формате:\n\n'
                  'Имя Фамилия\n'
                  'Должность\n'
-                 'Телефон'
+                 'Телефон',
+            reply_markup=InlineKeyboardMarkup(keyboard)
         )
         return ExchangeState.VISIT_CARD_DETAILS
     elif query.data == 'use_current':
         all_cards = get_visit_cards(user_id)
-        all_cards_text = ''
-        for card in all_cards:
-            all_cards_text += textwrap.dedent(f'''
-            Имя: {card['first_name']} {card['last_name']}
-            Должность: {card['job_title']}
-            Телефон: {card['phone']}\n''')
+        context.user_data['cards'] = all_cards
         context.bot.edit_message_text(
             chat_id=query.message.chat_id,
             message_id=query.message.message_id,
-            text='Ваша текущая визитка будет использована. Вот все визитки:\n\n' + all_cards_text
+            text='Ваша текущая визитка будет использована.'
         )
-        return ConversationHandler.END
+        return send_cards(update, context)
     else:
         context.bot.edit_message_text(
             chat_id=query.message.chat_id,
             message_id=query.message.message_id,
             text='ОК, в любое время вы можете начать обмен визитками.'
         )
-        return ConversationHandler.END
+        return send_main_menu(update, context)
 
 
 def handle_details(update, context):
@@ -97,49 +104,66 @@ def handle_details(update, context):
 
     all_cards = get_visit_cards(user_id)
 
-    all_cards_text = ''
-    for card in all_cards:
-        all_cards_text += textwrap.dedent(f'''
-        Имя: {card['first_name']} {card['last_name']}
-        Должность: {card['job_title']}
-        Телефон: {card['phone']}\n''')
+    context.user_data['cards'] = all_cards
 
-    update.message.reply_text('Ваша визитка сохранена. Вот все визитки:\n\n' + all_cards_text)
+    update.message.reply_text('Ваша визитка сохранена.')
 
-    return ConversationHandler.END
+    return send_cards(update, context)
 
-# def main():
-#     env = Env()
-#     env.read_env()
-#
-#     bot_token = env('TELEGRAM_TOKEN')
-#     updater = Updater(token=bot_token, use_context=True)
-#     dispatcher = updater.dispatcher
-#
-#     conversation_handler = ConversationHandler(
-#         entry_points=[CommandHandler('start', start_exchange)],
-#         states={
-#             VISIT_CARD_AGREE: [
-#                 CallbackQueryHandler(
-#                     handle_exchange_response
-#                 ),
-#             ],
-#             VISIT_CARD_DETAILS: [
-#                 MessageHandler(
-#                     Filters.text,
-#                     handle_details,
-#                 )
-#             ],
-#         },
-#         fallbacks=[
-#             CommandHandler('start', start_exchange)
-#         ]
-#     )
-#
-#     dispatcher.add_handler(conversation_handler)
-#     updater.start_polling()
-#     updater.idle()
-#
-#
-# if __name__ == '__main__':
-#     main()
+
+def get_cards_text(chunked_cards, chunk):
+    if len(chunked_cards) == 0:
+        text = 'Карты не найдены.'
+    else:
+        text = ''
+        for card in chunked_cards[chunk]:
+            text += textwrap.dedent(f'''
+                Имя: {card['first_name']} {card['last_name']}
+                Должность: {card['job_title']}
+                Телефон: {card['phone']}\n''')
+    return text
+
+
+def send_cards(update, context):
+    chunk_size = 5
+    chunk = 0
+    cards = context.user_data['cards']
+    chunked_cards = list(chunked(cards, chunk_size))
+
+    reply_markup = get_arrows_keyboard(chunked_cards, chunk)
+    text = get_cards_text(chunked_cards, chunk)
+
+    context.user_data['chunk'] = chunk
+    context.user_data['chunked_cards'] = chunked_cards
+    query = update.callback_query
+    if query:
+        message_id = query.message.message_id
+        context.bot.delete_message(update.effective_chat.id, message_id)
+    context.bot.send_message(
+        update.effective_chat.id,
+        text=text,
+        reply_markup=reply_markup
+    )
+
+    return ExchangeState.HANDLE_VISIT_CARDS
+
+
+def handle_visit_cards(update, context):
+    query = update.callback_query
+    if query.data == "⬅️":
+        context.user_data['chunk'] -= 1
+    elif query.data == "➡️":
+        context.user_data['chunk'] += 1
+
+    chunked_cards = context.user_data['chunked_cards']
+    chunk = context.user_data['chunk']
+
+    reply_markup = get_arrows_keyboard(chunked_cards, chunk)
+    text = get_cards_text(chunked_cards, chunk)
+
+    query.edit_message_text(
+        text=text,
+        reply_markup=reply_markup
+    )
+
+    return ExchangeState.HANDLE_VISIT_CARDS
