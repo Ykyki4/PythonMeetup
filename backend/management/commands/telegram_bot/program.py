@@ -37,7 +37,7 @@ def handle_program(update, context):
     if query:
         message_id = query.message.message_id
         context.bot.delete_message(update.effective_chat.id, message_id)
-        message = context.bot.send_message(
+        program_title_message = context.bot.send_message(
             update.effective_chat.id,
             text=text,
             reply_markup=get_keyboard(events_titles, 2)
